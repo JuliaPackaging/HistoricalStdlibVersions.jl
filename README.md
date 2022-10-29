@@ -6,5 +6,5 @@ Usage
 ```julia
 julia> import Pkg, HistoricalStdlibVersions
 
-julia> append!(empty!(Pkg.STDLIBS_BY_VERSION), HistoricalStdlibVersions.STDLIBS_BY_VERSION)
+julia> append!(empty!(Pkg.Types.STDLIBS_BY_VERSION), HistoricalStdlibVersions.STDLIBS_BY_VERSION)
 ```
