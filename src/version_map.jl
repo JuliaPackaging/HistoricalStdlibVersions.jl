@@ -1536,7 +1536,6 @@ const UNREGISTERED_STDLIBS = Dict{UUID,Tuple{String,Union{VersionNumber,Nothing}
     UUID("1a1011a3-84de-559e-8e89-a11a2f7dc383") => ("SharedArrays", nothing),
     UUID("6462fe0b-24de-5631-8697-dd941f90decc") => ("Sockets", nothing),
     UUID("2f01184e-e22b-5df5-ae63-d93ebab69eaf") => ("SparseArrays", nothing),
-    UUID("10745b16-79ce-11e8-11f9-7d13ad32a3b2") => ("Statistics", nothing),
     UUID("4607b0f0-06f3-5cda-b6b1-a6196a1729e9") => ("SuiteSparse", nothing),
     UUID("8dfed614-e22c-5e08-85e1-65c5234f0b40") => ("Test", nothing),
     UUID("cf7118a7-6976-5b1a-9a39-7adc72f591a4") => ("UUIDs", nothing),
