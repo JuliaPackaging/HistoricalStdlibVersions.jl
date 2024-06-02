@@ -111,25 +111,29 @@ function get_stdlibs(scratch_dir, julia_installer_name)
                 stdlibs_str = readchomp(`$(jlexe) $(jlflags) -e 'import Pkg; print(repr(Pkg.Types.load_stdlib()))'`)
             end
 
-            # This will give us a dictionary of UUID => (name, version) mappings for all standard libraries
-            if jlvers < v"1.8-"
-                stdlibs = Dict{Base.UUID, Tuple{AbstractString,Any}}(uuid => (name, nothing) for (uuid, name) in eval(Meta.parse(stdlibs_str)))
-
-                # We're going to try and get versions for each stdlib:
-                stdlib_path = readchomp(`$(jlexe) $(jlflags) -e 'import Pkg; print(Pkg.Types.stdlib_path(""))'`)
-                for uuid in keys(stdlibs)
-                    # If this stdlib has a `Project.toml`, try to parse it for its version field
-                    name = first(stdlibs[uuid])
-                    project_path = joinpath(stdlib_path, name, "Project.toml")
-                    if isfile(project_path)
-                        d = TOML.parsefile(project_path)
-                        if haskey(d, "version")
-                            stdlibs[uuid] = (name, VersionNumber(d["version"]))
-                        end
+            # This will give us a dictionary of UUID => (name, version, deps, weakdeps) mappings for all standard libraries
+            stdlibs = Dict{Base.UUID, Tuple}()
+            stdlib_path = readchomp(`$(jlexe) $(jlflags) -e 'import Pkg; print(Pkg.Types.stdlib_path(""))'`)
+            stdlib_names = [isa(name, Tuple) ? first(name) : name for (_, name) in eval(Meta.parse(stdlibs_str))]
+            for name in stdlib_names
+                project_path = joinpath(stdlib_path, name, "Project.toml")
+                version = nothing
+                deps = UUID[]
+                weakdeps = UUID[]
+                if isfile(project_path)
+                    d = TOML.parsefile(project_path)
+                    uuid = Base.UUID(d["uuid"])
+                    if haskey(d, "version")
+                        version = VersionNumber(d["version"])
+                    end
+                    if haskey(d, "deps")
+                        deps = Base.UUID.(values(d["deps"]))
+                    end
+                    if haskey(d, "weakdeps")
+                        weakdeps = Base.UUID.(values(d["weakdeps"]))
                     end
                 end
-            else
-                stdlibs = Dict{Base.UUID, Tuple}(uuid => (name, version) for (uuid, (name, version)) in eval(Meta.parse(stdlibs_str)))
+                stdlibs[uuid] = (name, version, deps, weakdeps)
             end
 
             return (jlvers, stdlibs)
@@ -151,6 +155,7 @@ function get_stdlibs(scratch_dir, julia_installer_name)
 end
 
 jobs = Channel()
+output = Channel()
 versions_dict = Dict()
 
 @sync begin
@@ -163,8 +168,9 @@ versions_dict = Dict()
     end
 
     # Consumer tasks
+    work_tasks = Task[]
     for _ in 1:Threads.nthreads()
-        Threads.@spawn begin
+        task = Threads.@spawn begin
             for (url, hash) in jobs
                 try
                     # We might try to download two files that have the same basename
@@ -190,7 +196,7 @@ versions_dict = Dict()
                     end
 
                     version, stdlibs = get_stdlibs(scratch_dir, basename(fname))
-                    versions_dict[version] = stdlibs
+                    put!(output, (version, stdlibs))
                 catch e
                     if isa(e, InterruptException)
                         rethrow()
@@ -198,6 +204,20 @@ versions_dict = Dict()
                     @error(e, exception=(e, catch_backtrace()))
                 end
             end
+        end
+        push!(work_tasks, task)
+    end
+
+    # output-closing thread
+    Threads.@spawn begin
+        wait.(work_tasks)
+        close(output)
+    end
+
+    # Collector task
+    Threads.@spawn begin
+        for (version, stdlibs) in output
+            versions_dict[version] = stdlibs
         end
     end
 end
@@ -221,18 +241,24 @@ for (julia_ver, stdlibs) in versions_dict
 end
 
 registries = Pkg.Registry.reachable_registries()
-_unregistered_stdlibs_with_vers = filter(all_stdlibs) do (uuid, name)
+unregistered_stdlibs = filter(all_stdlibs) do (uuid, _)
     return !any(haskey(reg.pkgs, uuid) for reg in registries)
 end
 
-# For each entry in `UNREGISTERED_STDLIBS`, set the version number to `nothing`
-unregistered_stdlibs = Dict((k, (v[1], nothing)) for (k, v) in pairs(_unregistered_stdlibs_with_vers))
-
 # Helper function for getting these printed out in a nicely-sorted order
 function print_sorted(io::IO, d::Dict; indent::Int=0)
-    println(io, "Dict{UUID,Tuple{String,Union{VersionNumber,Nothing}}}(")
-    for pair in sort(collect(d), by = kv-> kv[2][1])
-        println(io, " "^indent, repr(pair[1]), " => ", repr(pair[2]), ",")
+    println(io, "Dict{UUID,StdlibInfo}(")
+    for (uuid, (name, version, deps, weakdeps)) in sort(collect(d), by = kv-> kv[2][1])
+        println(io,
+            " "^indent,
+            repr(uuid), " => StdlibInfo(\n",
+            " "^(indent + 4), repr(name), ",\n",
+            " "^(indent + 4), repr(uuid), ",\n",
+            " "^(indent + 4), repr(version), ",\n",
+            " "^(indent + 4), repr(deps), ",\n",
+            " "^(indent + 4), repr(weakdeps), ",\n",
+            " "^indent, "),",
+        )
     end
     print(io, " "^(max(indent - 4, 0)), ")")
 end
@@ -244,8 +270,6 @@ open(output_fname, "w") do io
     print(io, """
     ## This file autogenerated by ext/HistoricalStdlibGenerator/generate_historical_stdlibs.jl
 
-    using Base: UUID
-
     # Julia standard libraries with duplicate entries removed so as to store only the
     # first release in a set of releases that all contain the same set of stdlibs.
     const STDLIBS_BY_VERSION = [
@@ -254,14 +278,15 @@ open(output_fname, "w") do io
         print(io, "    $(repr(v)) => ")
         print_sorted(io, versions_dict[v]; indent=8)
         println(io, ",")
+        println(io)
     end
     println(io, "]")
 
+    println(io)
     print(io, """
     # Next, we also embed a list of stdlibs that must _always_ be treated as stdlibs,
     # because they cannot be resolved in the registry; they have only ever existed within
     # the Julia stdlib source tree, and because of that, trying to resolve them will fail.
-    const UNREGISTERED_STDLIBS = """)
+    const UNREGISTERED_STDLIBS =""")
     print_sorted(io, unregistered_stdlibs; indent=4)
-    println(io)
 end
