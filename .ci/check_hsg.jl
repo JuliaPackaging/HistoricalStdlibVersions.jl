@@ -38,7 +38,7 @@ function run_hsg()
     hsg_generate_file = joinpath(hsg_directory, "generate_historical_stdlibs.jl")
 
     cmd_1 = `$(julia_binary) --project=$(hsg_directory) -e 'import Pkg; Pkg.instantiate()'`
-    cmd_2 = `$(julia_binary) --project=$(hsg_directory) $(hsg_generate_file)`
+    cmd_2 = `$(julia_binary) --project=$(hsg_directory) --threads $(min(Sys.CPU_THREADS, 8)) $(hsg_generate_file)`
 
     run(setenv(cmd_1, env2))
     run(setenv(cmd_2, env2))
