@@ -68,7 +68,9 @@ push!(version_urls, (generate_nightly_url(nothing),      ""))
 scratch_dir = @get_scratch!("julia_installers")
 
 # Ensure we always download the nightly
-rm(joinpath(scratch_dir, basename(last(version_urls)[1])); force=true)
+nightly_url = last(version_urls)[1]
+nightly_url_tag = bytes2hex(sha256(nightly_url))
+rm(joinpath(scratch_dir, string(nightly_url_tag, "-", basename(nightly_url))); force=true)
 
 # Helper function to print out stdlibs from a Julia installation
 function get_stdlibs(scratch_dir, julia_installer_name)
@@ -89,7 +91,6 @@ function get_stdlibs(scratch_dir, julia_installer_name)
                     sleep(0.1)
                     tries += 1
                 end
-                #@show readdir(mount_dir; join=true)
                 app_dir = first(filter(d -> startswith(basename(d), "Julia-"), readdir(mount_dir; join=true)))
                 symlink(joinpath(app_dir, "Contents", "Resources", "julia", "bin"), joinpath(dir, "bin"))
             elseif endswith(installer_path, ".exe")
@@ -154,7 +155,7 @@ versions_dict = Dict()
 
 @sync begin
     # Feeder task
-    @async begin
+    Threads.@spawn begin
         for (url, hash) in version_urls
             put!(jobs, (url, hash))
         end
@@ -162,8 +163,8 @@ versions_dict = Dict()
     end
 
     # Consumer tasks
-    for _ in 1:num_concurrent_downloads
-        @async begin
+    for _ in 1:Threads.nthreads()
+        Threads.@spawn begin
             for (url, hash) in jobs
                 try
                     # We might try to download two files that have the same basename
