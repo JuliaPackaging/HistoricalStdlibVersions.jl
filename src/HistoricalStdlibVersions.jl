@@ -35,16 +35,16 @@ let
     end
 end
 
-function __init__()
+function register!()
     if isdefined(Pkg.Types, :STDLIBS_BY_VERSION)
+        unregister!()
         if isdefined(Pkg.Types, :StdlibInfo)
             # We can directly use the datatypes in this package
-            append!(empty!(Pkg.Types.STDLIBS_BY_VERSION), STDLIBS_BY_VERSION)
-            merge!(empty!(Pkg.Types.UNREGISTERED_STDLIBS), UNREGISTERED_STDLIBS)
+            append!(Pkg.Types.STDLIBS_BY_VERSION, STDLIBS_BY_VERSION)
+            merge!(Pkg.Types.UNREGISTERED_STDLIBS, UNREGISTERED_STDLIBS)
         else
             # We have to convert our `StdlibInfo` types into the more limited (name, version) format
             # from earlier julias.  Those julias are unable to resolve dependencies of stdlibs properly.
-            empty!(Pkg.Types.STDLIBS_BY_VERSION)
             for (version, stdlibs) in STDLIBS_BY_VERSION
                 push!(Pkg.Types.STDLIBS_BY_VERSION, version => Dict{UUID,Tuple{String,Union{VersionNumber,Nothing}}}(
                     uuid => (info.name, info.version) for (uuid, info) in stdlibs
@@ -60,16 +60,21 @@ function __init__()
                 end
                 return nothing
             end
-            empty!(Pkg.Types.UNREGISTERED_STDLIBS)
-            for uuid in UNREGISTERED_STDLIBS
-                info = find_first_info(uuid)
-                if info === nothing
-                    @error("Dangling unregistered stdlib?!", uuid)
-                else
-                    Pkg.Types.UNREGISTERED_STDLIBS[uuid] = (info.name, nothing)
-                end
+            for (uuid, info) in UNREGISTERED_STDLIBS
+                Pkg.Types.UNREGISTERED_STDLIBS[uuid] = (info.name, nothing)
             end
         end
+    end
+end
+
+function unregister!()
+    empty!(Pkg.Types.STDLIBS_BY_VERSION)
+    empty!(Pkg.Types.UNREGISTERED_STDLIBS)
+end
+
+function __init__()
+    if get(ENV, "HISTORICAL_STDLIB_VERSIONS_AUTO_REGISTER", "true") == "true"
+        register!()
     end
 end
 end # module HistoricalStdlibVersions
