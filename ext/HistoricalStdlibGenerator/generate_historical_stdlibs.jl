@@ -1,7 +1,14 @@
 #!/usr/bin/env julia
 
 using Downloads, JSON3, Base.BinaryPlatforms, Scratch, SHA, Pkg, TOML
-using Base: UUID
+include("../../src/StdlibInfo.jl")
+
+# Work around issues where we attempt to `eval()` code from Julia versions
+# that have `Pkg.Types.StdlibInfo` (and embed that exact symbol path)
+# in versions that don't have it.
+if !isdefined(Pkg.Types, :StdlibInfo)
+    Core.eval(Pkg.Types, :(StdlibInfo = $(StdlibInfo)))
+end
 
 # Download versions.json, start iterating over Julia versions
 versions_json_url = "https://julialang-s3.julialang.org/bin/versions.json"
@@ -114,7 +121,11 @@ function get_stdlibs(scratch_dir, julia_installer_name)
             # This will give us a dictionary of UUID => (name, version, deps, weakdeps) mappings for all standard libraries
             stdlibs = Dict{Base.UUID, Tuple}()
             stdlib_path = readchomp(`$(jlexe) $(jlflags) -e 'import Pkg; print(Pkg.Types.stdlib_path(""))'`)
-            stdlib_names = [isa(name, Tuple) ? first(name) : name for (_, name) in eval(Meta.parse(stdlibs_str))]
+
+            get_name(t::Tuple) = first(t)
+            get_name(s::AbstractString) = s
+            get_name(stdlib::StdlibInfo) = stdlib.name
+            stdlib_names = [get_name(name) for (_, name) in eval(Meta.parse(stdlibs_str))]
             for name in stdlib_names
                 project_path = joinpath(stdlib_path, name, "Project.toml")
                 version = nothing
