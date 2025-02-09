@@ -11911,9 +11911,9 @@ const STDLIBS_BY_VERSION = [
             UUID[UUID("d6f4376e-aef5-505a-96c1-9c027394607a")],
             UUID[],
         ),
-        UUID("dc6e5ff7-fb65-4e79-a425-ec3bc9c03011") => StdlibInfo(
+        UUID("ac6e5ff7-fb65-4e79-a425-ec3bc9c03011") => StdlibInfo(
             "JuliaSyntaxHighlighting",
-            UUID("dc6e5ff7-fb65-4e79-a425-ec3bc9c03011"),
+            UUID("ac6e5ff7-fb65-4e79-a425-ec3bc9c03011"),
             v"1.12.0",
             UUID[UUID("f489334b-da3d-4c2e-b8f0-e476e12c162b")],
             UUID[],
@@ -11998,7 +11998,7 @@ const STDLIBS_BY_VERSION = [
         UUID("37e2e46d-f89d-539d-b4ee-838fcccc9c8e") => StdlibInfo(
             "LinearAlgebra",
             UUID("37e2e46d-f89d-539d-b4ee-838fcccc9c8e"),
-            v"1.11.0",
+            v"1.12.0",
             UUID[UUID("8e850b90-86db-534c-a0d3-1478176c7d93"), UUID("4536629a-c528-5b80-bd46-f80d51c5b363"), UUID("8f399da3-3557-5675-b5ff-fb832c97cbdb")],
             UUID[],
         ),
@@ -12020,7 +12020,7 @@ const STDLIBS_BY_VERSION = [
             "Markdown",
             UUID("d6f4376e-aef5-505a-96c1-9c027394607a"),
             v"1.11.0",
-            UUID[UUID("f489334b-da3d-4c2e-b8f0-e476e12c162b"), UUID("2a0f44e3-6c83-55bd-87e4-b1978d98bd5f"), UUID("dc6e5ff7-fb65-4e79-a425-ec3bc9c03011")],
+            UUID[UUID("f489334b-da3d-4c2e-b8f0-e476e12c162b"), UUID("2a0f44e3-6c83-55bd-87e4-b1978d98bd5f"), UUID("ac6e5ff7-fb65-4e79-a425-ec3bc9c03011")],
             UUID[],
         ),
         UUID("a63ad114-7e13-5084-954f-fe012c677804") => StdlibInfo(
@@ -12097,7 +12097,7 @@ const STDLIBS_BY_VERSION = [
             "REPL",
             UUID("3fa0cd96-eef1-5676-8a61-b3b8758bbffb"),
             v"1.11.0",
-            UUID[UUID("b77e0a4c-d291-57a0-90e8-8db25a27a240"), UUID("f489334b-da3d-4c2e-b8f0-e476e12c162b"), UUID("dc6e5ff7-fb65-4e79-a425-ec3bc9c03011"), UUID("6462fe0b-24de-5631-8697-dd941f90decc"), UUID("4ec0a83e-493e-50e2-b9ac-8f72acf5a8f5"), UUID("d6f4376e-aef5-505a-96c1-9c027394607a")],
+            UUID[UUID("b77e0a4c-d291-57a0-90e8-8db25a27a240"), UUID("f489334b-da3d-4c2e-b8f0-e476e12c162b"), UUID("ac6e5ff7-fb65-4e79-a425-ec3bc9c03011"), UUID("6462fe0b-24de-5631-8697-dd941f90decc"), UUID("4ec0a83e-493e-50e2-b9ac-8f72acf5a8f5"), UUID("d6f4376e-aef5-505a-96c1-9c027394607a")],
             UUID[],
         ),
         UUID("9a3f8284-a2c9-5f02-9a11-845980a1fd5c") => StdlibInfo(
@@ -12295,13 +12295,6 @@ const UNREGISTERED_STDLIBS =Dict{UUID,StdlibInfo}(
         UUID("b77e0a4c-d291-57a0-90e8-8db25a27a240"),
         nothing,
         UUID[UUID("d6f4376e-aef5-505a-96c1-9c027394607a")],
-        UUID[],
-    ),
-    UUID("dc6e5ff7-fb65-4e79-a425-ec3bc9c03011") => StdlibInfo(
-        "JuliaSyntaxHighlighting",
-        UUID("dc6e5ff7-fb65-4e79-a425-ec3bc9c03011"),
-        v"1.12.0",
-        UUID[UUID("f489334b-da3d-4c2e-b8f0-e476e12c162b")],
         UUID[],
     ),
     UUID("76f85450-5226-5b5a-8eaa-529ad045b433") => StdlibInfo(
