@@ -21,4 +21,4 @@ jobs:
         with:
           # version: '1'
           version: 'nightly'
-      - run: julia -t4 --color=yes .ci/check_hsg.jl
+      - run: julia --color=yes .ci/check_hsg.jl
