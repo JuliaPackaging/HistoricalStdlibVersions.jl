@@ -12061,7 +12061,7 @@ const STDLIBS_BY_VERSION = [
         UUID("458c3c95-2e84-50aa-8efc-19380b2a3a95") => StdlibInfo(
             "OpenSSL_jll",
             UUID("458c3c95-2e84-50aa-8efc-19380b2a3a95"),
-            v"3.0.15+2",
+            v"3.0.16+0",
             UUID[UUID("8f399da3-3557-5675-b5ff-fb832c97cbdb"), UUID("56f22d72-fd6d-98f1-02f0-08ddc0907c33")],
             UUID[],
         ),
