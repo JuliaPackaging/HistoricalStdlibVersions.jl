@@ -5,6 +5,7 @@ Loads historical stdlib version information into Pkg to allow Pkg to resolve std
 """
 module HistoricalStdlibVersions
 using Pkg
+using PrecompileTools: @setup_workload, @compile_workload
 include("StdlibInfo.jl")
 include("version_map.jl")
 
@@ -60,4 +61,11 @@ function __init__()
         register!()
     end
 end
+
+@setup_workload begin
+    @compile_workload begin
+        register!()
+    end
+end
+
 end # module HistoricalStdlibVersions
