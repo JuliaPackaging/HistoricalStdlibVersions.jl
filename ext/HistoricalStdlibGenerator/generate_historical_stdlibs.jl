@@ -266,8 +266,8 @@ function print_sorted(io::IO, d::Dict; indent::Int=0)
             " "^(indent + 4), repr(name), ",\n",
             " "^(indent + 4), repr(uuid), ",\n",
             " "^(indent + 4), repr(version), ",\n",
-            " "^(indent + 4), repr(deps), ",\n",
-            " "^(indent + 4), repr(weakdeps), ",\n",
+            " "^(indent + 4), repr(sort(deps)), ",\n",
+            " "^(indent + 4), repr(sort(weakdeps)), ",\n",
             " "^indent, "),",
         )
     end
