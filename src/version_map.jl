@@ -13138,9 +13138,9 @@ const STDLIBS_BY_VERSION = [
             UUID[UUID("d6f4376e-aef5-505a-96c1-9c027394607a")],
             UUID[],
         ),
-        UUID("dc6e5ff7-fb65-4e79-a425-ec3bc9c03011") => StdlibInfo(
+        UUID("ac6e5ff7-fb65-4e79-a425-ec3bc9c03011") => StdlibInfo(
             "JuliaSyntaxHighlighting",
-            UUID("dc6e5ff7-fb65-4e79-a425-ec3bc9c03011"),
+            UUID("ac6e5ff7-fb65-4e79-a425-ec3bc9c03011"),
             v"1.12.0",
             UUID[UUID("f489334b-da3d-4c2e-b8f0-e476e12c162b")],
             UUID[],
@@ -13225,7 +13225,7 @@ const STDLIBS_BY_VERSION = [
         UUID("37e2e46d-f89d-539d-b4ee-838fcccc9c8e") => StdlibInfo(
             "LinearAlgebra",
             UUID("37e2e46d-f89d-539d-b4ee-838fcccc9c8e"),
-            v"1.11.0",
+            v"1.12.0",
             UUID[UUID("4536629a-c528-5b80-bd46-f80d51c5b363"), UUID("8e850b90-86db-534c-a0d3-1478176c7d93"), UUID("8f399da3-3557-5675-b5ff-fb832c97cbdb")],
             UUID[],
         ),
@@ -13239,7 +13239,7 @@ const STDLIBS_BY_VERSION = [
         UUID("3a97d323-0669-5f0c-9066-3539efd106a3") => StdlibInfo(
             "MPFR_jll",
             UUID("3a97d323-0669-5f0c-9066-3539efd106a3"),
-            v"4.2.1+2",
+            v"4.2.2+0",
             UUID[UUID("56f22d72-fd6d-98f1-02f0-08ddc0907c33"), UUID("781609d7-10c4-51f6-84f2-b8444358ff6d"), UUID("8f399da3-3557-5675-b5ff-fb832c97cbdb")],
             UUID[],
         ),
@@ -13247,7 +13247,7 @@ const STDLIBS_BY_VERSION = [
             "Markdown",
             UUID("d6f4376e-aef5-505a-96c1-9c027394607a"),
             v"1.11.0",
-            UUID[UUID("2a0f44e3-6c83-55bd-87e4-b1978d98bd5f"), UUID("dc6e5ff7-fb65-4e79-a425-ec3bc9c03011"), UUID("f489334b-da3d-4c2e-b8f0-e476e12c162b")],
+            UUID[UUID("2a0f44e3-6c83-55bd-87e4-b1978d98bd5f"), UUID("ac6e5ff7-fb65-4e79-a425-ec3bc9c03011"), UUID("f489334b-da3d-4c2e-b8f0-e476e12c162b")],
             UUID[],
         ),
         UUID("a63ad114-7e13-5084-954f-fe012c677804") => StdlibInfo(
@@ -13260,7 +13260,7 @@ const STDLIBS_BY_VERSION = [
         UUID("14a3606d-f60d-562e-9121-12d972cd8159") => StdlibInfo(
             "MozillaCACerts_jll",
             UUID("14a3606d-f60d-562e-9121-12d972cd8159"),
-            v"2024.12.31",
+            v"2025.2.25",
             UUID[],
             UUID[],
         ),
@@ -13288,7 +13288,7 @@ const STDLIBS_BY_VERSION = [
         UUID("458c3c95-2e84-50aa-8efc-19380b2a3a95") => StdlibInfo(
             "OpenSSL_jll",
             UUID("458c3c95-2e84-50aa-8efc-19380b2a3a95"),
-            v"3.0.15+2",
+            v"3.5.0+0",
             UUID[UUID("56f22d72-fd6d-98f1-02f0-08ddc0907c33"), UUID("8f399da3-3557-5675-b5ff-fb832c97cbdb")],
             UUID[],
         ),
@@ -13324,7 +13324,7 @@ const STDLIBS_BY_VERSION = [
             "REPL",
             UUID("3fa0cd96-eef1-5676-8a61-b3b8758bbffb"),
             v"1.11.0",
-            UUID[UUID("4ec0a83e-493e-50e2-b9ac-8f72acf5a8f5"), UUID("6462fe0b-24de-5631-8697-dd941f90decc"), UUID("b77e0a4c-d291-57a0-90e8-8db25a27a240"), UUID("d6f4376e-aef5-505a-96c1-9c027394607a"), UUID("dc6e5ff7-fb65-4e79-a425-ec3bc9c03011"), UUID("f489334b-da3d-4c2e-b8f0-e476e12c162b")],
+            UUID[UUID("4ec0a83e-493e-50e2-b9ac-8f72acf5a8f5"), UUID("6462fe0b-24de-5631-8697-dd941f90decc"), UUID("ac6e5ff7-fb65-4e79-a425-ec3bc9c03011"), UUID("b77e0a4c-d291-57a0-90e8-8db25a27a240"), UUID("d6f4376e-aef5-505a-96c1-9c027394607a"), UUID("f489334b-da3d-4c2e-b8f0-e476e12c162b")],
             UUID[],
         ),
         UUID("9a3f8284-a2c9-5f02-9a11-845980a1fd5c") => StdlibInfo(
@@ -13947,13 +13947,6 @@ const UNREGISTERED_STDLIBS =Dict{UUID,StdlibInfo}(
         UUID[UUID("d6f4376e-aef5-505a-96c1-9c027394607a")],
         UUID[],
     ),
-    UUID("dc6e5ff7-fb65-4e79-a425-ec3bc9c03011") => StdlibInfo(
-        "JuliaSyntaxHighlighting",
-        UUID("dc6e5ff7-fb65-4e79-a425-ec3bc9c03011"),
-        v"1.12.0",
-        UUID[UUID("f489334b-da3d-4c2e-b8f0-e476e12c162b")],
-        UUID[],
-    ),
     UUID("76f85450-5226-5b5a-8eaa-529ad045b433") => StdlibInfo(
         "LibGit2",
         UUID("76f85450-5226-5b5a-8eaa-529ad045b433"),
@@ -13999,7 +13992,7 @@ const UNREGISTERED_STDLIBS =Dict{UUID,StdlibInfo}(
     UUID("44cfe95a-1eb2-52ea-b672-e2afdf69b78f") => StdlibInfo(
         "Pkg",
         UUID("44cfe95a-1eb2-52ea-b672-e2afdf69b78f"),
-        v"1.1.2",
+        v"1.1.3",
         UUID[UUID("3fa0cd96-eef1-5676-8a61-b3b8758bbffb"), UUID("76f85450-5226-5b5a-8eaa-529ad045b433"), UUID("9a3f8284-a2c9-5f02-9a11-845980a1fd5c"), UUID("ade2ca70-3891-5945-98fb-dc099432e06a"), UUID("cf7118a7-6976-5b1a-9a39-7adc72f591a4"), UUID("d6f4376e-aef5-505a-96c1-9c027394607a"), UUID("de0858da-6303-5e67-8744-51eddeeeb8d7"), UUID("ea8e919c-243c-51af-8825-aaa63cd721ce")],
         UUID[],
     ),
