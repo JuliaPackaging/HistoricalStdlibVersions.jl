@@ -30,7 +30,7 @@ jobs:
       - name: "Instantiate the project"
         run: julia --color=yes --project=ext/HistoricalStdlibGenerator -e 'import Pkg; Pkg.instantiate()'
       - name: "Run the `generate_historical_stdlibs.jl` script"
-        run: julia --color=yes --project=ext/HistoricalStdlibGenerator ext/HistoricalStdlibGenerator/generate_historical_stdlibs.jl
+        run: julia --threads=auto --color=yes --project=ext/HistoricalStdlibGenerator ext/HistoricalStdlibGenerator/generate_historical_stdlibs.jl
       - run: git status
       - run: git add -A
       - run: git diff HEAD
