@@ -1,7 +1,7 @@
 name = "HistoricalStdlibVersions"
 uuid = "6df8b67a-e8a0-4029-b4b7-ac196fe72102"
 authors = ["Ian <i.r.butterworth@gmail.com>"]
-version = "2.0.3"
+version = "2.0.4"
 
 [deps]
 Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
