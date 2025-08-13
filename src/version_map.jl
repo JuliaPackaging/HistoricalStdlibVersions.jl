@@ -13973,7 +13973,7 @@ const STDLIBS_BY_VERSION = [
         UUID("d55e3150-da41-5e91-b323-ecfd1eec6109") => StdlibInfo(
             "LLD_jll",
             UUID("d55e3150-da41-5e91-b323-ecfd1eec6109"),
-            v"20.1.2+0",
+            v"20.1.8+0",
             UUID[UUID("56f22d72-fd6d-98f1-02f0-08ddc0907c33"), UUID("83775a58-1f1d-513f-b197-d71354ab007a"), UUID("8f36deef-c2a5-5394-99ed-8e07531fb29a"), UUID("8f399da3-3557-5675-b5ff-fb832c97cbdb")],
             UUID[],
         ),
@@ -14001,8 +14001,8 @@ const STDLIBS_BY_VERSION = [
         UUID("deac9b47-8bc7-5906-a0fe-35ac56dc84c0") => StdlibInfo(
             "LibCURL_jll",
             UUID("deac9b47-8bc7-5906-a0fe-35ac56dc84c0"),
-            v"8.14.1+1",
-            UUID[UUID("29816b5a-b9ab-546f-933c-edad1886dfa8"), UUID("458c3c95-2e84-50aa-8efc-19380b2a3a95"), UUID("56f22d72-fd6d-98f1-02f0-08ddc0907c33"), UUID("83775a58-1f1d-513f-b197-d71354ab007a"), UUID("8e850ede-7688-5339-a07c-302acd2aaf8d"), UUID("8f399da3-3557-5675-b5ff-fb832c97cbdb"), UUID("e66e0078-7015-5450-92f7-15fbd957f2ae")],
+            v"8.15.0+1",
+            UUID[UUID("29816b5a-b9ab-546f-933c-edad1886dfa8"), UUID("3161d3a3-bdf6-5164-811a-617609db77b4"), UUID("458c3c95-2e84-50aa-8efc-19380b2a3a95"), UUID("56f22d72-fd6d-98f1-02f0-08ddc0907c33"), UUID("83775a58-1f1d-513f-b197-d71354ab007a"), UUID("8e850ede-7688-5339-a07c-302acd2aaf8d"), UUID("8f399da3-3557-5675-b5ff-fb832c97cbdb"), UUID("e66e0078-7015-5450-92f7-15fbd957f2ae")],
             UUID[],
         ),
         UUID("76f85450-5226-5b5a-8eaa-529ad045b433") => StdlibInfo(
@@ -14036,7 +14036,7 @@ const STDLIBS_BY_VERSION = [
         UUID("745a5e78-f969-53e9-954f-d19f2f74f4e3") => StdlibInfo(
             "LibUnwind_jll",
             UUID("745a5e78-f969-53e9-954f-d19f2f74f4e3"),
-            v"1.8.2+0",
+            v"1.8.2+1",
             UUID[UUID("56f22d72-fd6d-98f1-02f0-08ddc0907c33"), UUID("83775a58-1f1d-513f-b197-d71354ab007a"), UUID("8f399da3-3557-5675-b5ff-fb832c97cbdb"), UUID("e66e0078-7015-5450-92f7-15fbd957f2ae")],
             UUID[],
         ),
@@ -14113,7 +14113,7 @@ const STDLIBS_BY_VERSION = [
         UUID("458c3c95-2e84-50aa-8efc-19380b2a3a95") => StdlibInfo(
             "OpenSSL_jll",
             UUID("458c3c95-2e84-50aa-8efc-19380b2a3a95"),
-            v"3.5.1+0",
+            v"3.5.2+0",
             UUID[UUID("56f22d72-fd6d-98f1-02f0-08ddc0907c33"), UUID("8f399da3-3557-5675-b5ff-fb832c97cbdb")],
             UUID[],
         ),
@@ -14274,7 +14274,7 @@ const STDLIBS_BY_VERSION = [
         UUID("8f36deef-c2a5-5394-99ed-8e07531fb29a") => StdlibInfo(
             "libLLVM_jll",
             UUID("8f36deef-c2a5-5394-99ed-8e07531fb29a"),
-            v"20.1.2+1",
+            v"20.1.8+0",
             UUID[UUID("3161d3a3-bdf6-5164-811a-617609db77b4"), UUID("56f22d72-fd6d-98f1-02f0-08ddc0907c33"), UUID("83775a58-1f1d-513f-b197-d71354ab007a"), UUID("8f399da3-3557-5675-b5ff-fb832c97cbdb"), UUID("e66e0078-7015-5450-92f7-15fbd957f2ae")],
             UUID[],
         ),
