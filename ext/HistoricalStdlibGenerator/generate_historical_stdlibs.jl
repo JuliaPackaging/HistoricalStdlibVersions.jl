@@ -16,7 +16,7 @@ num_concurrent_downloads = 8
 
 @info("Downloading versions.json...")
 json_buff = IOBuffer()
-Downloads.download(versions_json_url, json_buff)
+retry(Downloads.download, delays = ExponentialBackOff(n=5))(versions_json_url, json_buff)
 versions_json = JSON3.read(String(take!(json_buff)))
 
 # Collect all versions that are >= 1.0.0, and are a stable release
@@ -189,7 +189,7 @@ versions_dict = Dict()
                     fname = joinpath(scratch_dir, string(url_tag, "-", basename(url)))
                     if !isfile(fname)
                         @info("Downloading $(url)")
-                        Downloads.download(url, fname)
+                        retry(Downloads.download, delays = ExponentialBackOff(n=5))(url, fname)
                     end
 
                     if !isempty(hash)
@@ -197,7 +197,7 @@ versions_dict = Dict()
                         if calc_hash != hash
                             @error("Hash mismatch on $(fname); deleting and re-downloading")
                             rm(fname; force=true)
-                            Downloads.download(url, fname)
+                            retry(Downloads.download, delays = ExponentialBackOff(n=5))(url, fname)
                             calc_hash = bytes2hex(open(io -> sha256(io), fname, "r"))
                             if calc_hash != hash
                                 @error("Hash mismatch on $(fname); re-download failed!")
