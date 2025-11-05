@@ -7,7 +7,8 @@ module HistoricalStdlibVersions
 using Pkg
 using PrecompileTools: @setup_workload, @compile_workload
 include("StdlibInfo.jl")
-include("version_map.jl")
+include("version_map_compressed.jl")
+include("uncompress.jl")
 
 let
     max_hsg_version = maximum(first.(STDLIBS_BY_VERSION))

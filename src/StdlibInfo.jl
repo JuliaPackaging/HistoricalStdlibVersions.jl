@@ -19,3 +19,17 @@ else
 import Pkg.Types: StdlibInfo
 end
 
+# Base info struct for stdlib segments (excludes version)
+Base.@kwdef struct StdlibBaseInfo
+    name::String
+    uuid::UUID
+    deps::Vector{UUID} = UUID[]
+    weakdeps::Vector{UUID} = UUID[]
+end
+
+# Segment struct that combines base info with version ranges
+Base.@kwdef struct StdlibSegment
+    base_info::StdlibBaseInfo
+    version_ranges::Vector{Pair{Tuple{VersionNumber,VersionNumber}, Union{Nothing,VersionNumber}}}
+end
+
