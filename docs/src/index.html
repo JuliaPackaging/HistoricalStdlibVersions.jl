@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Julia Stdlib Versions</title>
+<meta name="description" content="Which version of each standard library shipped with each Julia release, from 1.0 to nightly. Generated from HistoricalStdlibVersions.jl.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='9' cy='22' r='6' fill='%23cb3c33'/%3E%3Ccircle cx='23' cy='22' r='6' fill='%239558b2'/%3E%3Ccircle cx='16' cy='10' r='6' fill='%23389826'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip" href="#matrix">Skip to the chart</a>
+
+<header class="masthead">
+  <div class="masthead-inner">
+    <div class="title-block">
+      <h1>Julia stdlib versions</h1>
+      <p class="lede">
+        Which version of each standard library shipped with each Julia release,
+        as recorded by
+        <a href="https://github.com/JuliaPackaging/HistoricalStdlibVersions.jl">HistoricalStdlibVersions.jl</a>.
+        Only releases where the stdlib set changed are listed, so a column stands
+        for every release from that version up to the next column. The newest
+        column may come from a nightly build.
+      </p>
+    </div>
+    <div class="masthead-actions">
+      <button id="theme-toggle" class="icon-btn" type="button" aria-label="Toggle dark mode" title="Toggle dark mode">
+        <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><path class="sun" d="M10 4.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11zm0-3.5v2M10 17v2M1 10h2M17 10h2M3.6 3.6l1.4 1.4M15 15l1.4 1.4M3.6 16.4 5 15M15 5l1.4-1.4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path class="moon" d="M15.5 12.5A6.5 6.5 0 0 1 7.5 4.5a6.5 6.5 0 1 0 8 8z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+      </button>
+      <a class="icon-btn" href="https://github.com/JuliaPackaging/HistoricalStdlibVersions.jl" aria-label="GitHub repository" title="GitHub repository">
+        <svg viewBox="0 0 16 16" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+      </a>
+    </div>
+  </div>
+</header>
+
+<main class="page">
+  <section class="kpis" aria-label="Summary">
+    <div class="tile"><div class="tile-value" id="kpi-releases">–</div><div class="tile-label">Julia releases tracked</div><div class="tile-sub" id="kpi-range"></div></div>
+    <div class="tile"><div class="tile-value" id="kpi-stdlibs">–</div><div class="tile-label">Standard libraries</div><div class="tile-sub" id="kpi-stdlibs-sub"></div></div>
+    <div class="tile"><div class="tile-value" id="kpi-jlls">–</div><div class="tile-label">JLL binary wrappers</div><div class="tile-sub">bundled since Julia 1.6</div></div>
+    <div class="tile"><div class="tile-value" id="kpi-bumps">–</div><div class="tile-label">Version bumps recorded</div><div class="tile-sub" id="kpi-bumps-sub"></div></div>
+  </section>
+
+  <section class="controls" aria-label="Filters">
+    <label class="search">
+      <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m13 13 4.5 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      <input id="search" type="search" placeholder="Filter stdlibs…" autocomplete="off" spellcheck="false" aria-label="Filter stdlibs by name">
+    </label>
+    <div class="seg" role="group" aria-label="Which stdlibs to show">
+      <button type="button" data-kind="all" class="on">All</button>
+      <button type="button" data-kind="lib">Libraries</button>
+      <button type="button" data-kind="jll">JLLs</button>
+    </div>
+    <label class="select-wrap">
+      <span>Sort</span>
+      <select id="sort" aria-label="Sort rows">
+        <option value="name">Name</option>
+        <option value="added">First appearance</option>
+        <option value="bumps">Most bumps</option>
+        <option value="removed">Removed first</option>
+      </select>
+    </label>
+    <label class="check"><input type="checkbox" id="only-changed"> Only rows that changed in the selected release</label>
+    <div class="seg" role="group" aria-label="Column density">
+      <button type="button" data-density="fit" class="on">Fit</button>
+      <button type="button" data-density="compact">Compact</button>
+      <button type="button" data-density="wide">Wide</button>
+    </div>
+    <div class="seg view-seg" role="group" aria-label="View">
+      <button type="button" data-view="chart" class="on">Chart</button>
+      <button type="button" data-view="table">Table</button>
+    </div>
+  </section>
+
+  <section class="matrix-card" id="matrix">
+    <div class="legend" aria-label="Legend">
+      <span class="legend-item"><i class="sw sw-ramp"></i>Colour deepens with each version bump of that stdlib</span>
+      <span class="legend-item"><i class="sw sw-unversioned"></i>No version in Project.toml (tracks Julia)</span>
+      <span class="legend-item"><i class="sw sw-unreg"></i>Never registered (dotted name)</span>
+      <span class="legend-item"><i class="sw sw-selected"></i>Selected release</span>
+    </div>
+    <div class="matrix-scroll" id="matrix-scroll">
+      <div class="matrix-inner" id="matrix-inner" role="img" aria-labelledby="chart-title chart-desc">
+        <span id="chart-title" hidden>Stdlib versions by Julia release</span>
+        <span id="chart-desc" hidden>Rows are standard libraries, columns are Julia releases. Each bar spans the releases that shipped the same stdlib version.</span>
+        <div class="matrix-head">
+          <svg id="corner" aria-hidden="true"></svg>
+          <svg id="header" aria-hidden="true"></svg>
+        </div>
+        <div class="matrix-body">
+          <svg id="labels" aria-hidden="true"></svg>
+          <svg id="chart" aria-hidden="true"></svg>
+        </div>
+      </div>
+    </div>
+    <div id="table-view" class="table-view" hidden></div>
+    <p class="hint">Hover a bar for details. Click a column to see what changed in that release, or a row name for its full history.</p>
+  </section>
+
+  <aside class="panel" id="panel" hidden aria-live="polite">
+    <div class="panel-head">
+      <h2 id="panel-title"></h2>
+      <button type="button" class="icon-btn" id="panel-close" aria-label="Close details">
+        <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><path d="M5 5l10 10M15 5 5 15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div id="panel-body" class="panel-body"></div>
+  </aside>
+</main>
+
+<div id="tooltip" class="tooltip" role="tooltip" hidden></div>
+
+<footer class="foot">
+  <span id="foot-meta"></span>
+  <span>Data is regenerated by <code>ext/HistoricalStdlibGenerator</code> and rendered by <code>docs/make.jl</code>.</span>
+</footer>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
