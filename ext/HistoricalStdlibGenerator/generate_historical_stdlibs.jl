@@ -117,16 +117,25 @@ function get_stdlibs(scratch_dir, julia_installer_name)
             else
                 stdlibs_str = readchomp(`$(jlexe) $(jlflags) -e 'import Pkg; print(repr(Pkg.Types.load_stdlib()))'`)
             end
+            # Since Julia 1.9, some stdlibs ship with Julia but are resolved from the registry like
+            # normal packages ("upgradable" stdlibs). `load_stdlib()` leaves them out, so ask for
+            # their names separately; they are recorded apart from the regular stdlibs.
+            upgradable_names = String[]
+            if jlvers >= v"1.9"
+                upgradable_str = readchomp(`$(jlexe) $(jlflags) -e 'import Pkg; print(repr(isdefined(Pkg.Types, :UPGRADABLE_STDLIBS) ? Pkg.Types.UPGRADABLE_STDLIBS : String[]))'`)
+                upgradable_names = eval(Meta.parse(upgradable_str))
+            end
 
             # This will give us a dictionary of UUID => (name, version, deps, weakdeps) mappings for all standard libraries
             stdlibs = Dict{Base.UUID, Tuple}()
+            upgradable = Dict{Base.UUID, Tuple}()
             stdlib_path = readchomp(`$(jlexe) $(jlflags) -e 'import Pkg; print(Pkg.Types.stdlib_path(""))'`)
 
             get_name(t::Tuple) = first(t)
             get_name(s::AbstractString) = s
             get_name(stdlib::StdlibInfo) = stdlib.name
             stdlib_names = [get_name(name) for (_, name) in eval(Meta.parse(stdlibs_str))]
-            for name in stdlib_names
+            for name in vcat(stdlib_names, upgradable_names)
                 project_path = joinpath(stdlib_path, name, "Project.toml")
                 version = nothing
                 deps = UUID[]
@@ -144,10 +153,14 @@ function get_stdlibs(scratch_dir, julia_installer_name)
                         weakdeps = Base.UUID.(values(d["weakdeps"]))
                     end
                 end
-                stdlibs[uuid] = (name, version, deps, weakdeps)
+                if name in upgradable_names
+                    upgradable[uuid] = (name, version, deps, weakdeps)
+                else
+                    stdlibs[uuid] = (name, version, deps, weakdeps)
+                end
             end
 
-            return (jlvers, stdlibs)
+            return (jlvers, stdlibs, upgradable)
         finally
             # Clean up mounted directories
             if isdir(mount_dir)
@@ -168,6 +181,7 @@ end
 jobs = Channel()
 output = Channel()
 versions_dict = Dict()
+upgradable_dict = Dict()
 
 @sync begin
     # Feeder task
@@ -206,8 +220,8 @@ versions_dict = Dict()
                         end
                     end
 
-                    version, stdlibs = get_stdlibs(scratch_dir, basename(fname))
-                    put!(output, (version, stdlibs))
+                    version, stdlibs, upgradable = get_stdlibs(scratch_dir, basename(fname))
+                    put!(output, (version, stdlibs, upgradable))
                 catch e
                     if isa(e, InterruptException)
                         rethrow()
@@ -227,23 +241,29 @@ versions_dict = Dict()
 
     # Collector task
     Threads.@spawn begin
-        for (version, stdlibs) in output
+        for (version, stdlibs, upgradable) in output
             versions_dict[version] = stdlibs
+            upgradable_dict[version] = upgradable
         end
     end
 end
 
 # Next, drop versions that are the same as the one "before" them:
-sorted_versions = sort(collect(keys(versions_dict)))
-versions_to_drop = VersionNumber[]
-for idx in 2:length(sorted_versions)
-    if versions_dict[sorted_versions[idx-1]] == versions_dict[sorted_versions[idx]]
-        push!(versions_to_drop, sorted_versions[idx])
+function drop_unchanged!(d::Dict)
+    sorted_versions = sort(collect(keys(d)))
+    versions_to_drop = VersionNumber[]
+    for idx in 2:length(sorted_versions)
+        if d[sorted_versions[idx-1]] == d[sorted_versions[idx]]
+            push!(versions_to_drop, sorted_versions[idx])
+        end
     end
+    for v in versions_to_drop
+        delete!(d, v)
+    end
+    return d
 end
-for v in versions_to_drop
-    delete!(versions_dict, v)
-end
+drop_unchanged!(versions_dict)
+drop_unchanged!(upgradable_dict)
 
 # Next, figure out which stdlibs are actually unresolvable, because they've never been registered
 all_stdlibs = Dict{UUID,Tuple}()
@@ -288,6 +308,28 @@ open(output_fname, "w") do io
     for v in sorted_versions
         print(io, "    $(repr(v)) => ")
         print_sorted(io, versions_dict[v]; indent=8)
+        println(io, ",")
+        println(io)
+    end
+    println(io, "]")
+
+    println(io)
+    print(io, """
+    # Stdlibs that ship with Julia at a fixed version but can also be upgraded from the registry
+    # ("upgradable" stdlibs, e.g. `DelimitedFiles` since Julia 1.9 and `Statistics` since 1.11).
+    # Pkg resolves these like normal packages, so they are recorded here rather than in
+    # `STDLIBS_BY_VERSION`, which must stay exactly what Pkg expects to load. Only the first
+    # release in a set of releases that all ship the same versions is stored.
+    const UPGRADABLE_STDLIBS_BY_VERSION = [
+    """)
+    # Leading releases with no upgradable stdlibs carry no information; a later empty entry does.
+    upgradable_versions = sort(collect(keys(upgradable_dict)))
+    while !isempty(upgradable_versions) && isempty(upgradable_dict[first(upgradable_versions)])
+        popfirst!(upgradable_versions)
+    end
+    for v in upgradable_versions
+        print(io, "    $(repr(v)) => ")
+        print_sorted(io, upgradable_dict[v]; indent=8)
         println(io, ",")
         println(io)
     end
