@@ -114,6 +114,8 @@
     let rows = stdlibs.filter((s) => {
       if (state.kind === "lib" && s.jll) return false;
       if (state.kind === "jll" && !s.jll) return false;
+      // Upgradable as of the newest tracked release.
+      if (state.kind === "upgradable" && !(s.entries[NCOL - 1] && s.entries[NCOL - 1].u)) return false;
       if (q && !s.name.toLowerCase().includes(q)) return false;
       if (state.onlyChanged && state.release !== null) {
         const d = diffs[state.release];
