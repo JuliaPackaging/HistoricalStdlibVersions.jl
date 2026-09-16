@@ -523,21 +523,226 @@
     tv.appendChild(table);
   }
 
+  // ---------- dependency graph ----------
+  // Laid out once over the union of every release's edges, so a stdlib keeps its place
+  // while the slider moves and only appears, disappears, or gains and loses edges.
+  const graphSvg = $("graph");
+  const RANK_GAP = 64, NODE_H = 22, LINE_GAP = 8, XGAP = 10, GPAD = 16;
+  let graph = null;
+
+  function buildGraphLayout() {
+    const edgeKeys = new Map();
+    for (const s of stdlibs) for (const e of s.entries) {
+      if (!e) continue;
+      for (const d of e.d) edgeKeys.set(d + "|" + s.name, { from: d, to: s.name, weak: false });
+      for (const d of e.w) if (!edgeKeys.has(d + "|" + s.name)) edgeKeys.set(d + "|" + s.name, { from: d, to: s.name, weak: true });
+    }
+    const edges = [...edgeKeys.values()];
+    // Rank is the longest chain of dependencies below a node, so leaves sit in rank 0 on the left.
+    const depsOf = new Map(stdlibs.map((s) => [s.name, []]));
+    edges.forEach((e) => depsOf.get(e.to).push(e.from));
+    const rank = new Map(), visiting = new Set();
+    const rankOf = (n) => {
+      if (rank.has(n)) return rank.get(n);
+      if (visiting.has(n)) return 0;
+      visiting.add(n);
+      const r = depsOf.get(n).reduce((m, d) => Math.max(m, rankOf(d) + 1), 0);
+      visiting.delete(n);
+      rank.set(n, r);
+      return r;
+    };
+    stdlibs.forEach((s) => rankOf(s.name));
+    const layers = Array.from({ length: Math.max(...rank.values()) + 1 }, () => []);
+    stdlibs.forEach((s) => layers[rank.get(s.name)].push(s.name));
+    // Each rank is a band of pills packed left to right and wrapped at the card width, with
+    // leaves at the bottom. Ranks are ordered by their neighbours' horizontal positions over a
+    // few sweeps to reduce crossings.
+    const width = Math.max(600, graphSvg.parentElement.clientWidth) - GPAD * 2;
+    const pillW = (n) => Math.ceil(textW(n, 12)) + 18;
+    const nbrs = new Map(stdlibs.map((s) => [s.name, []]));
+    edges.forEach((e) => { nbrs.get(e.from).push(e.to); nbrs.get(e.to).push(e.from); });
+    const cx = new Map();
+    const pack = (l) => {
+      const rows = [[]];
+      let x = 0;
+      for (const n of l) {
+        if (x + pillW(n) > width && rows[rows.length - 1].length) { rows.push([]); x = 0; }
+        rows[rows.length - 1].push(n);
+        x += pillW(n) + XGAP;
+      }
+      for (const row of rows) {
+        const total = row.reduce((a, n) => a + pillW(n), 0) + XGAP * (row.length - 1);
+        let xx = (width - total) / 2;
+        for (const n of row) { cx.set(n, xx + pillW(n) / 2); xx += pillW(n) + XGAP; }
+      }
+      return rows;
+    };
+    layers.forEach((l) => pack(l.sort()));
+    for (let sweep = 0; sweep < 8; sweep++) {
+      for (const l of (sweep % 2 ? [...layers].reverse() : layers)) {
+        const bc = new Map(l.map((n) => {
+          const ns = nbrs.get(n);
+          return [n, ns.length ? ns.reduce((a, m) => a + cx.get(m), 0) / ns.length : cx.get(n)];
+        }));
+        l.sort((a, b) => bc.get(a) - bc.get(b) || a.localeCompare(b));
+        pack(l);
+      }
+    }
+    const rowsByLayer = layers.map(pack);
+    const geom = new Map();
+    let y = GPAD;
+    for (let r = layers.length - 1; r >= 0; r--) {
+      for (const row of rowsByLayer[r]) {
+        for (const n of row) geom.set(n, { x: GPAD + cx.get(n) - pillW(n) / 2, y, w: pillW(n) });
+        y += NODE_H + LINE_GAP;
+      }
+      y += RANK_GAP - LINE_GAP;
+    }
+    return { edges, geom, W: width + GPAD * 2, H: y - RANK_GAP + LINE_GAP + GPAD };
+  }
+
+  function buildGraphDom() {
+    graph = buildGraphLayout();
+    graphSvg.innerHTML = "";
+    graphSvg.setAttribute("viewBox", "0 0 " + graph.W + " " + graph.H);
+    const defs = el("defs", {}, graphSvg);
+    const pat = el("pattern", { id: "ghatch", width: 6, height: 6, patternUnits: "userSpaceOnUse", patternTransform: "rotate(45)" }, defs);
+    el("line", { x1: 0, y1: 0, x2: 0, y2: 6, class: "hatch-line" }, pat);
+    const marker = el("marker", { id: "arrow", viewBox: "0 0 10 10", refX: 9, refY: 5, markerWidth: 6, markerHeight: 6, orient: "auto" }, defs);
+    el("path", { d: "M0 0L10 5 0 10z", class: "arrow-head" }, marker);
+    const eg = el("g", {}, graphSvg), ng = el("g", {}, graphSvg);
+    graph.edgeEls = graph.edges.map((e) => {
+      // From the top of the dependency up to the bottom of the stdlib that depends on it.
+      const a = graph.geom.get(e.from), b = graph.geom.get(e.to);
+      const x1 = a.x + a.w / 2, y1 = a.y, x2 = b.x + b.w / 2, y2 = b.y + NODE_H, my = (y1 + y2) / 2;
+      return el("path", { d: "M" + x1 + " " + y1 + " C" + x1 + " " + my + " " + x2 + " " + my + " " + x2 + " " + y2, class: "edge" + (e.weak ? " weak" : ""), "marker-end": "url(#arrow)" }, eg);
+    });
+    graph.nodeEls = new Map();
+    for (const s of stdlibs) {
+      const p = graph.geom.get(s.name);
+      const g = el("g", { class: "node", transform: "translate(" + p.x + "," + p.y + ")" }, ng);
+      el("rect", { width: p.w, height: NODE_H, rx: 11, ry: 11, class: "node-bg" + (s.registered ? "" : " unregistered") }, g);
+      el("rect", { width: p.w, height: NODE_H, rx: 11, ry: 11, class: "node-hatch", fill: "url(#ghatch)" }, g);
+      el("text", { x: p.w / 2, y: NODE_H / 2 + 4, "text-anchor": "middle", class: "node-label" }, g).textContent = s.name;
+      g.addEventListener("mouseenter", (ev) => { focusGraph(s.name); showTip(ev, graphTip(s)); });
+      g.addEventListener("mousemove", moveTip);
+      g.addEventListener("mouseleave", () => { focusGraph(null); hideTip(); });
+      g.addEventListener("click", () => selectStdlib(s.name));
+      graph.nodeEls.set(s.name, g);
+    }
+  }
+
+  const graphCol = () => (state.release !== null ? state.release : NCOL - 1);
+
+  function updateGraph() {
+    if (!graph) buildGraphDom();
+    theme = readTheme();
+    const col = graphCol();
+    const visible = new Set(visibleRows().map((s) => s.name));
+    const shown = new Set();
+    for (const s of stdlibs) {
+      const e = s.entries[col];
+      const g = graph.nodeEls.get(s.name);
+      const on = !!e && visible.has(s.name);
+      g.classList.toggle("off", !on);
+      if (!on) continue;
+      shown.add(s.name);
+      const run = s.runs.find((r) => r.start <= col && col <= r.end);
+      const bg = run.v === null ? theme.unversioned : theme.ramp[run.ramp];
+      g.querySelector(".node-bg").setAttribute("fill", bg);
+      g.querySelector(".node-hatch").style.display = e.u ? "" : "none";
+      const t = g.querySelector(".node-label");
+      t.setAttribute("fill", run.v === null ? theme.unversionedInk : inkFor(bg));
+      t.setAttribute("stroke", bg);
+    }
+    graph.edges.forEach((e, i) => {
+      const t = byName.get(e.to).entries[col];
+      const on = shown.has(e.from) && shown.has(e.to) && !!t && (t.d.includes(e.from) || t.w.includes(e.from));
+      graph.edgeEls[i].classList.toggle("off", !on);
+    });
+    $("release-slider").max = NCOL - 1;
+    $("release-slider").value = col;
+    $("slider-release").textContent = "Julia " + versions[col];
+    const d = diffs[col];
+    $("slider-delta").textContent = col === 0
+      ? "first tracked release"
+      : "+" + d.added.length + " −" + d.removed.length + " · " + d.bumped.length + " bumped since " + versions[col - 1];
+    $("release-prev").disabled = col === 0;
+    $("release-next").disabled = col === NCOL - 1;
+    focusGraph(null);
+  }
+
+  // Light up a node's full upstream and downstream chains at the current release.
+  function focusGraph(name) {
+    if (!name) {
+      graphSvg.classList.remove("focus");
+      graphSvg.querySelectorAll(".lit").forEach((n) => n.classList.remove("lit"));
+      return;
+    }
+    const col = graphCol();
+    const up = new Set(), down = new Set();
+    const walkUp = (n) => {
+      const e = byName.get(n).entries[col];
+      if (e) for (const d of e.d.concat(e.w)) if (!up.has(d)) { up.add(d); walkUp(d); }
+    };
+    const walkDown = (n) => {
+      for (const s of stdlibs) {
+        const e = s.entries[col];
+        if (e && (e.d.includes(n) || e.w.includes(n)) && !down.has(s.name)) { down.add(s.name); walkDown(s.name); }
+      }
+    };
+    walkUp(name);
+    walkDown(name);
+    graphSvg.classList.add("focus");
+    graph.nodeEls.forEach((g, n) => g.classList.toggle("lit", n === name || up.has(n) || down.has(n)));
+    // An edge is part of the chain if it feeds the node from upstream or leads from it downstream.
+    const chain = (a, b) => (up.has(a) && (b === name || up.has(b))) || (down.has(b) && (a === name || down.has(a)));
+    graph.edges.forEach((e, i) => graph.edgeEls[i].classList.toggle("lit", chain(e.from, e.to)));
+  }
+
+  function graphTip(s) {
+    const col = graphCol();
+    const e = s.entries[col];
+    if (!e) return "<b>" + esc(s.name) + "</b>";
+    const dependents = stdlibs.filter((t) => { const x = t.entries[col]; return x && (x.d.includes(s.name) || x.w.includes(s.name)); }).length;
+    let html = "<b>" + esc(s.name) + "</b> in Julia " + esc(versions[col]) + "<br>";
+    html += '<span class="tt-ver">' + (e.v === null ? "unversioned" : esc(e.v)) + "</span><br>";
+    html += '<span class="tt-sub">depends on ' + (e.d.length + e.w.length) + " · depended on by " + dependents + "</span>";
+    if (e.u) html += '<div class="tt-deps">ships with Julia, upgradable from the General registry</div>';
+    html += '<div class="tt-deps">click for details</div>';
+    return html;
+  }
+
+  function setGraphRelease(i) {
+    state.release = Math.max(0, Math.min(NCOL - 1, i));
+    render();
+  }
+  $("release-slider").addEventListener("input", (ev) => setGraphRelease(+ev.target.value));
+  $("release-prev").addEventListener("click", () => setGraphRelease(graphCol() - 1));
+  $("release-next").addEventListener("click", () => setGraphRelease(graphCol() + 1));
+  document.addEventListener("keydown", (ev) => {
+    if (state.view !== "graph" || /INPUT|SELECT|TEXTAREA/.test(ev.target.tagName)) return;
+    if (ev.key === "ArrowLeft") { setGraphRelease(graphCol() - 1); ev.preventDefault(); }
+    if (ev.key === "ArrowRight") { setGraphRelease(graphCol() + 1); ev.preventDefault(); }
+  });
+
   // ---------- top-level ----------
   function render() {
     const rows = visibleRows();
+    $("matrix-scroll").hidden = state.view !== "chart";
+    $("table-view").hidden = state.view !== "table";
+    $("graph-view").hidden = state.view !== "graph";
+    document.body.classList.toggle("view-graph", state.view === "graph");
     if (state.view === "chart") {
-      $("matrix-scroll").hidden = false;
-      $("table-view").hidden = true;
       updateColumnWidth();
       renderHeader();
       renderRows(rows);
       const sc = $("matrix-scroll");
       sc.classList.toggle("overflowing", LABEL_W + NCOL * COL_W > sc.clientWidth);
-    } else {
-      $("matrix-scroll").hidden = true;
-      $("table-view").hidden = false;
+    } else if (state.view === "table") {
       renderTable(rows);
+    } else {
+      updateGraph();
     }
     renderPanel();
     writeHash();
@@ -614,9 +819,11 @@
   } catch (_) { /* storage unavailable */ }
   let resizeTimer = null;
   window.addEventListener("resize", () => {
-    if (state.density !== "fit" || state.view !== "chart") return;
     clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(render, 120);
+    resizeTimer = setTimeout(() => {
+      if (state.view === "graph") { graph = null; render(); }
+      else if (state.view === "chart" && state.density === "fit") render();
+    }, 120);
   });
   $("sort").addEventListener("change", (ev) => { state.sort = ev.target.value; render(); });
   $("only-changed").addEventListener("change", (ev) => {

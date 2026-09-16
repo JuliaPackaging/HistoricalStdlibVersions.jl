@@ -59,6 +59,7 @@
     </div>
     <div class="seg view-seg" role="group" aria-label="View">
       <button type="button" data-view="chart" class="on">Chart</button>
+      <button type="button" data-view="graph">Graph</button>
       <button type="button" data-view="table">Table</button>
     </div>
   </section>
@@ -70,6 +71,20 @@
       <span class="legend-item"><i class="sw sw-upgradable"></i>Ships with Julia but upgradable from General</span>
       <span class="legend-item"><i class="sw sw-unreg"></i>Never registered (dotted name)</span>
       <span class="legend-item"><i class="sw sw-selected"></i>Selected release</span>
+      <span class="legend-item graph-only"><i class="sw sw-weak"></i>Weak dependency</span>
+    </div>
+    <div id="graph-view" class="graph-view" hidden>
+      <div class="slider-row">
+        <button type="button" class="icon-btn" id="release-prev" aria-label="Previous release">
+          <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><path d="M12.5 4 6.5 10l6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <input type="range" id="release-slider" min="0" max="0" value="0" aria-label="Julia release">
+        <button type="button" class="icon-btn" id="release-next" aria-label="Next release">
+          <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><path d="m7.5 4 6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="slider-label"><span id="slider-release"></span><span id="slider-delta" class="slider-delta"></span></div>
+      </div>
+      <div class="graph-scroll"><svg id="graph" aria-label="Stdlib dependency graph"></svg></div>
     </div>
     <div class="matrix-scroll" id="matrix-scroll">
       <div class="matrix-inner" id="matrix-inner" role="img" aria-labelledby="chart-title chart-desc">
@@ -86,11 +101,16 @@
       </div>
     </div>
     <div id="table-view" class="table-view" hidden></div>
-    <p class="hint">
+    <p class="hint chart-only">
       Only releases where the stdlib set changed are listed, so a column stands for every release
       from that version up to the next column. The newest column may come from a nightly build.
       Hover a bar for details. Click a column to see what changed in that release, or a row name
       for its full history.
+    </p>
+    <p class="hint graph-only">
+      Arrows point from a stdlib up to the stdlibs that depend on it, so leaves sit at the bottom.
+      Nodes keep their place as the slider moves through releases (arrow keys work too). Hover a
+      stdlib to light up everything it depends on and everything that depends on it; click it for details.
     </p>
   </section>
 
