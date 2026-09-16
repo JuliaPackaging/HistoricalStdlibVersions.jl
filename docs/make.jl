@@ -136,6 +136,15 @@ mkpath(build_dir)
 for f in readdir(src_dir)
     cp(joinpath(src_dir, f), joinpath(build_dir, f))
 end
+# GitHub Pages serves assets with a ten minute max-age, so a freshly fetched page could run
+# against a cached script from the previous deploy. Version the asset URLs so they change together.
+let index = joinpath(build_dir, "index.html"), tag = isempty(data.commit) ? string(time_ns()) : data.commit
+    html = read(index, String)
+    for asset in ("style.css", "app.js", "data.js")
+        html = replace(html, "\"$(asset)\"" => "\"$(asset)?v=$(tag)\"")
+    end
+    write(index, html)
+end
 # Written as a script rather than fetched JSON so the page also works from a `file://` URL.
 open(joinpath(build_dir, "data.js"), "w") do io
     print(io, "window.HSV_DATA = ")
