@@ -95,7 +95,7 @@ button, input, select { font: inherit; color: inherit; }
 
 .masthead { border-bottom: 1px solid var(--border); background: var(--surface); }
 .masthead-inner {
-  max-width: 1440px; margin: 0 auto; padding: 12px 16px;
+  padding: 12px 16px;
   display: flex; gap: 16px; align-items: center; justify-content: space-between;
 }
 .title-block { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; }
@@ -117,7 +117,7 @@ button, input, select { font: inherit; color: inherit; }
   :root:not([data-theme="light"]) .icon-btn .moon { display: block; }
 }
 
-.page { max-width: 1440px; margin: 0 auto; padding: 14px 16px 40px; }
+.page { padding: 14px 16px 40px; }
 
 .controls {
   display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; margin-bottom: 12px;
@@ -279,7 +279,7 @@ svg text { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
 .table-view td.upgradable { text-decoration: underline dotted; text-underline-offset: 3px; }
 
 .foot {
-  max-width: 1440px; margin: 0 auto; padding: 0 16px 40px; color: var(--muted); font-size: 12.5px;
+  padding: 0 16px 40px; color: var(--muted); font-size: 12.5px;
   display: flex; flex-wrap: wrap; gap: 4px 24px;
 }
 
