@@ -12,7 +12,7 @@ end
 
 # Download versions.json, start iterating over Julia versions
 versions_json_url = "https://julialang-s3.julialang.org/bin/versions.json"
-num_concurrent_downloads = 8
+num_concurrent_downloads = 16
 
 @info("Downloading versions.json...")
 json_buff = IOBuffer()
@@ -120,13 +120,23 @@ function get_stdlibs(scratch_dir, julia_installer_name)
 
             # This will give us a dictionary of UUID => (name, version, deps, weakdeps) mappings for all standard libraries
             stdlibs = Dict{Base.UUID, Tuple}()
+            upgradable = Dict{Base.UUID, Tuple}()
             stdlib_path = readchomp(`$(jlexe) $(jlflags) -e 'import Pkg; print(Pkg.Types.stdlib_path(""))'`)
 
             get_name(t::Tuple) = first(t)
             get_name(s::AbstractString) = s
             get_name(stdlib::StdlibInfo) = stdlib.name
             stdlib_names = [get_name(name) for (_, name) in eval(Meta.parse(stdlibs_str))]
-            for name in stdlib_names
+            # Since Julia 1.9, some stdlibs ship with Julia but are resolved from the registry like
+            # normal packages ("upgradable" stdlibs). Pkg's `load_stdlib()` skips them, so they are
+            # the stdlib directories it did not report. They are recorded apart from the regular stdlibs.
+            upgradable_names = String[]
+            if jlvers >= v"1.9"
+                upgradable_names = filter(readdir(stdlib_path)) do name
+                    name ∉ stdlib_names && isfile(joinpath(stdlib_path, name, "Project.toml"))
+                end
+            end
+            for name in vcat(stdlib_names, upgradable_names)
                 project_path = joinpath(stdlib_path, name, "Project.toml")
                 version = nothing
                 deps = UUID[]
@@ -144,10 +154,14 @@ function get_stdlibs(scratch_dir, julia_installer_name)
                         weakdeps = Base.UUID.(values(d["weakdeps"]))
                     end
                 end
-                stdlibs[uuid] = (name, version, deps, weakdeps)
+                if name in upgradable_names
+                    upgradable[uuid] = (name, version, deps, weakdeps)
+                else
+                    stdlibs[uuid] = (name, version, deps, weakdeps)
+                end
             end
 
-            return (jlvers, stdlibs)
+            return (jlvers, stdlibs, upgradable)
         finally
             # Clean up mounted directories
             if isdir(mount_dir)
@@ -165,85 +179,67 @@ function get_stdlibs(scratch_dir, julia_installer_name)
     end
 end
 
-jobs = Channel()
-output = Channel()
 versions_dict = Dict()
+upgradable_dict = Dict()
 
-@sync begin
-    # Feeder task
-    Threads.@spawn begin
-        for (url, hash) in version_urls
-            put!(jobs, (url, hash))
-        end
-        close(jobs)
-    end
+# One task per release. Downloads are network-bound, so many run at once; extracting and
+# running each Julia is CPU-bound, so that stage is limited to the core count.
+download_sem = Base.Semaphore(num_concurrent_downloads)
+inspect_sem = Base.Semaphore(Sys.CPU_THREADS)
+@sync for (url, hash) in version_urls
+    @async try
+        # We might try to download two files that have the same basename
+        url_tag = bytes2hex(sha256(url))
+        fname = joinpath(scratch_dir, string(url_tag, "-", basename(url)))
+        Base.acquire(download_sem) do
+            if !isfile(fname)
+                @info("Downloading $(url)")
+                retry(Downloads.download, delays = ExponentialBackOff(n=5))(url, fname)
+            end
 
-    # Consumer tasks
-    work_tasks = Task[]
-    for _ in 1:Threads.nthreads()
-        task = Threads.@spawn begin
-            for (url, hash) in jobs
-                try
-                    # We might try to download two files that have the same basename
-                    url_tag = bytes2hex(sha256(url))
-                    fname = joinpath(scratch_dir, string(url_tag, "-", basename(url)))
-                    if !isfile(fname)
-                        @info("Downloading $(url)")
-                        retry(Downloads.download, delays = ExponentialBackOff(n=5))(url, fname)
+            if !isempty(hash)
+                calc_hash = bytes2hex(open(io -> sha256(io), fname, "r"))
+                if calc_hash != hash
+                    @error("Hash mismatch on $(fname); deleting and re-downloading")
+                    rm(fname; force=true)
+                    retry(Downloads.download, delays = ExponentialBackOff(n=5))(url, fname)
+                    calc_hash = bytes2hex(open(io -> sha256(io), fname, "r"))
+                    if calc_hash != hash
+                        error("Hash mismatch on $(fname); re-download failed!")
                     end
-
-                    if !isempty(hash)
-                        calc_hash = bytes2hex(open(io -> sha256(io), fname, "r"))
-                        if calc_hash != hash
-                            @error("Hash mismatch on $(fname); deleting and re-downloading")
-                            rm(fname; force=true)
-                            retry(Downloads.download, delays = ExponentialBackOff(n=5))(url, fname)
-                            calc_hash = bytes2hex(open(io -> sha256(io), fname, "r"))
-                            if calc_hash != hash
-                                @error("Hash mismatch on $(fname); re-download failed!")
-                                continue
-                            end
-                        end
-                    end
-
-                    version, stdlibs = get_stdlibs(scratch_dir, basename(fname))
-                    put!(output, (version, stdlibs))
-                catch e
-                    if isa(e, InterruptException)
-                        rethrow()
-                    end
-                    @error(e, exception=(e, catch_backtrace()))
                 end
             end
         end
-        push!(work_tasks, task)
-    end
 
-    # output-closing thread
-    Threads.@spawn begin
-        wait.(work_tasks)
-        close(output)
-    end
-
-    # Collector task
-    Threads.@spawn begin
-        for (version, stdlibs) in output
-            versions_dict[version] = stdlibs
+        version, stdlibs, upgradable = Base.acquire(inspect_sem) do
+            get_stdlibs(scratch_dir, basename(fname))
         end
+        versions_dict[version] = stdlibs
+        upgradable_dict[version] = upgradable
+    catch e
+        if isa(e, InterruptException)
+            rethrow()
+        end
+        @error(e, exception=(e, catch_backtrace()))
     end
 end
 
 # Next, drop versions that are the same as the one "before" them:
-sorted_versions = sort(collect(keys(versions_dict)))
-versions_to_drop = VersionNumber[]
-for idx in 2:length(sorted_versions)
-    if versions_dict[sorted_versions[idx-1]] == versions_dict[sorted_versions[idx]]
-        push!(versions_to_drop, sorted_versions[idx])
+function drop_unchanged!(d::Dict)
+    sorted_versions = sort(collect(keys(d)))
+    versions_to_drop = VersionNumber[]
+    for idx in 2:length(sorted_versions)
+        if d[sorted_versions[idx-1]] == d[sorted_versions[idx]]
+            push!(versions_to_drop, sorted_versions[idx])
+        end
     end
+    for v in versions_to_drop
+        delete!(d, v)
+    end
+    return d
 end
-for v in versions_to_drop
-    delete!(versions_dict, v)
-end
+drop_unchanged!(versions_dict)
+drop_unchanged!(upgradable_dict)
 
 # Next, figure out which stdlibs are actually unresolvable, because they've never been registered
 all_stdlibs = Dict{UUID,Tuple}()
@@ -288,6 +284,28 @@ open(output_fname, "w") do io
     for v in sorted_versions
         print(io, "    $(repr(v)) => ")
         print_sorted(io, versions_dict[v]; indent=8)
+        println(io, ",")
+        println(io)
+    end
+    println(io, "]")
+
+    println(io)
+    print(io, """
+    # Stdlibs that ship with Julia at a fixed version but can also be upgraded from the registry
+    # ("upgradable" stdlibs, e.g. `DelimitedFiles` since Julia 1.9 and `Statistics` since 1.11).
+    # Pkg resolves these like normal packages, so they are recorded here rather than in
+    # `STDLIBS_BY_VERSION`, which must stay exactly what Pkg expects to load. Only the first
+    # release in a set of releases that all ship the same versions is stored.
+    const UPGRADABLE_STDLIBS_BY_VERSION = [
+    """)
+    # Leading releases with no upgradable stdlibs carry no information; a later empty entry does.
+    upgradable_versions = sort(collect(keys(upgradable_dict)))
+    while !isempty(upgradable_versions) && isempty(upgradable_dict[first(upgradable_versions)])
+        popfirst!(upgradable_versions)
+    end
+    for v in upgradable_versions
+        print(io, "    $(repr(v)) => ")
+        print_sorted(io, upgradable_dict[v]; indent=8)
         println(io, ",")
         println(io)
     end

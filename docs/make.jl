@@ -63,26 +63,45 @@ function git(args...)
     end
 end
 
-julia_versions = first.(STDLIBS_BY_VERSION)
-by_version = Dict(STDLIBS_BY_VERSION)
+# Older data files predate the upgradable list.
+upgradable_by_version = isdefined(@__MODULE__, :UPGRADABLE_STDLIBS_BY_VERSION) ? UPGRADABLE_STDLIBS_BY_VERSION : Pair{VersionNumber,Dict{UUID,StdlibInfo}}[]
+
+# A column for every release at which either list changed. Each list applies from its
+# entry's release up to the next entry, the same way Pkg's `get_last_stdlibs` reads it.
+julia_versions = sort(unique(vcat(first.(STDLIBS_BY_VERSION), first.(upgradable_by_version))))
+function snapshot(list, jv)
+    last = nothing
+    for (v, stdlibs) in list
+        v > jv && break
+        last = stdlibs
+    end
+    return something(last, Dict{UUID,StdlibInfo}())
+end
 
 # Stable identity is the UUID; names never change in the data but the UUID is what Pkg uses.
 names = Dict{UUID,String}()
-for (_, stdlibs) in STDLIBS_BY_VERSION, (uuid, info) in stdlibs
+for list in (STDLIBS_BY_VERSION, upgradable_by_version), (_, stdlibs) in list, (uuid, info) in stdlibs
     names[uuid] = info.name
 end
 sorted_uuids = sort(collect(keys(names)); by = u -> lowercase(names[u]))
 
 stdlibs = map(sorted_uuids) do uuid
     # One entry per Julia column: `nothing` if the stdlib is absent in that release,
-    # otherwise the version (or `nothing` for unversioned) plus dependency names.
+    # otherwise the version (or `nothing` for unversioned), dependency names, and
+    # whether it is an upgradable stdlib in that release.
     entries = map(julia_versions) do jv
-        info = get(by_version[jv], uuid, nothing)
+        info = get(snapshot(STDLIBS_BY_VERSION, jv), uuid, nothing)
+        upgradable = false
+        if info === nothing
+            info = get(snapshot(upgradable_by_version, jv), uuid, nothing)
+            upgradable = info !== nothing
+        end
         info === nothing && return nothing
         return (
             v = info.version,
             d = sort([names[d] for d in info.deps]),
             w = sort([names[d] for d in info.weakdeps]),
+            u = upgradable,
         )
     end
     return (

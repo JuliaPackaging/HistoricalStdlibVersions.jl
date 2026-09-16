@@ -17920,7 +17920,7 @@ const STDLIBS_BY_VERSION = [
         UUID("2f01184e-e22b-5df5-ae63-d93ebab69eaf") => StdlibInfo(
             "SparseArrays",
             UUID("2f01184e-e22b-5df5-ae63-d93ebab69eaf"),
-            v"1.13.0",
+            v"1.14.0",
             UUID[UUID("37e2e46d-f89d-539d-b4ee-838fcccc9c8e"), UUID("8f399da3-3557-5675-b5ff-fb832c97cbdb"), UUID("9a3f8284-a2c9-5f02-9a11-845980a1fd5c"), UUID("9e88b42a-f829-5b0c-bbe9-9e923198166b"), UUID("bea87d4a-7f5b-5778-9afe-8cc45184846c")],
             UUID[],
         ),
@@ -17941,7 +17941,7 @@ const STDLIBS_BY_VERSION = [
         UUID("bea87d4a-7f5b-5778-9afe-8cc45184846c") => StdlibInfo(
             "SuiteSparse_jll",
             UUID("bea87d4a-7f5b-5778-9afe-8cc45184846c"),
-            v"7.10.1+0",
+            v"7.14.0+1",
             UUID[UUID("56f22d72-fd6d-98f1-02f0-08ddc0907c33"), UUID("8e850b90-86db-534c-a0d3-1478176c7d93"), UUID("8f399da3-3557-5675-b5ff-fb832c97cbdb"), UUID("e66e0078-7015-5450-92f7-15fbd957f2ae")],
             UUID[],
         ),
@@ -18028,6 +18028,92 @@ const STDLIBS_BY_VERSION = [
             v"17.8.2+0",
             UUID[UUID("56f22d72-fd6d-98f1-02f0-08ddc0907c33"), UUID("8f399da3-3557-5675-b5ff-fb832c97cbdb"), UUID("e66e0078-7015-5450-92f7-15fbd957f2ae")],
             UUID[],
+        ),
+    ),
+
+]
+
+# Stdlibs that ship with Julia at a fixed version but can also be upgraded from the registry
+# ("upgradable" stdlibs, e.g. `DelimitedFiles` since Julia 1.9 and `Statistics` since 1.11).
+# Pkg resolves these like normal packages, so they are recorded here rather than in
+# `STDLIBS_BY_VERSION`, which must stay exactly what Pkg expects to load. Only the first
+# release in a set of releases that all ship the same versions is stored.
+const UPGRADABLE_STDLIBS_BY_VERSION = [
+    v"1.9.0" => Dict{UUID,StdlibInfo}(
+        UUID("8bb1440f-4735-579b-a4ab-409b98df4dab") => StdlibInfo(
+            "DelimitedFiles",
+            UUID("8bb1440f-4735-579b-a4ab-409b98df4dab"),
+            v"1.9.1",
+            UUID[UUID("a63ad114-7e13-5084-954f-fe012c677804")],
+            UUID[],
+        ),
+    ),
+
+    v"1.11.0" => Dict{UUID,StdlibInfo}(
+        UUID("8bb1440f-4735-579b-a4ab-409b98df4dab") => StdlibInfo(
+            "DelimitedFiles",
+            UUID("8bb1440f-4735-579b-a4ab-409b98df4dab"),
+            v"1.9.1",
+            UUID[UUID("a63ad114-7e13-5084-954f-fe012c677804")],
+            UUID[],
+        ),
+        UUID("10745b16-79ce-11e8-11f9-7d13ad32a3b2") => StdlibInfo(
+            "Statistics",
+            UUID("10745b16-79ce-11e8-11f9-7d13ad32a3b2"),
+            v"1.11.1",
+            UUID[UUID("2f01184e-e22b-5df5-ae63-d93ebab69eaf"), UUID("37e2e46d-f89d-539d-b4ee-838fcccc9c8e")],
+            UUID[UUID("2f01184e-e22b-5df5-ae63-d93ebab69eaf")],
+        ),
+    ),
+
+    v"1.12.0" => Dict{UUID,StdlibInfo}(
+        UUID("8bb1440f-4735-579b-a4ab-409b98df4dab") => StdlibInfo(
+            "DelimitedFiles",
+            UUID("8bb1440f-4735-579b-a4ab-409b98df4dab"),
+            v"1.9.1",
+            UUID[UUID("a63ad114-7e13-5084-954f-fe012c677804")],
+            UUID[],
+        ),
+        UUID("10745b16-79ce-11e8-11f9-7d13ad32a3b2") => StdlibInfo(
+            "Statistics",
+            UUID("10745b16-79ce-11e8-11f9-7d13ad32a3b2"),
+            v"1.11.2",
+            UUID[UUID("2f01184e-e22b-5df5-ae63-d93ebab69eaf"), UUID("37e2e46d-f89d-539d-b4ee-838fcccc9c8e")],
+            UUID[UUID("2f01184e-e22b-5df5-ae63-d93ebab69eaf")],
+        ),
+    ),
+
+    v"1.13.0" => Dict{UUID,StdlibInfo}(
+        UUID("8bb1440f-4735-579b-a4ab-409b98df4dab") => StdlibInfo(
+            "DelimitedFiles",
+            UUID("8bb1440f-4735-579b-a4ab-409b98df4dab"),
+            v"1.9.1",
+            UUID[UUID("a63ad114-7e13-5084-954f-fe012c677804")],
+            UUID[],
+        ),
+        UUID("10745b16-79ce-11e8-11f9-7d13ad32a3b2") => StdlibInfo(
+            "Statistics",
+            UUID("10745b16-79ce-11e8-11f9-7d13ad32a3b2"),
+            v"1.11.2",
+            UUID[UUID("37e2e46d-f89d-539d-b4ee-838fcccc9c8e")],
+            UUID[UUID("2f01184e-e22b-5df5-ae63-d93ebab69eaf")],
+        ),
+    ),
+
+    v"1.14.0" => Dict{UUID,StdlibInfo}(
+        UUID("8bb1440f-4735-579b-a4ab-409b98df4dab") => StdlibInfo(
+            "DelimitedFiles",
+            UUID("8bb1440f-4735-579b-a4ab-409b98df4dab"),
+            v"1.9.1",
+            UUID[UUID("a63ad114-7e13-5084-954f-fe012c677804")],
+            UUID[],
+        ),
+        UUID("10745b16-79ce-11e8-11f9-7d13ad32a3b2") => StdlibInfo(
+            "Statistics",
+            UUID("10745b16-79ce-11e8-11f9-7d13ad32a3b2"),
+            v"1.11.5",
+            UUID[UUID("37e2e46d-f89d-539d-b4ee-838fcccc9c8e")],
+            UUID[UUID("2f01184e-e22b-5df5-ae63-d93ebab69eaf")],
         ),
     ),
 

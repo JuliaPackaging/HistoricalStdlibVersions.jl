@@ -32,14 +32,16 @@ function run_hsg()
     delete!(env2, "JULIA_DEPOT_PATH")
     delete!(env2, "JULIA_LOAD_PATH")
     delete!(env2, "JULIA_PROJECT")
-    env2["JULIA_DEPOT_PATH"] = mktempdir(; cleanup = true)
+    # The trailing separator keeps Julia's bundled depots on the path, so the downloaded
+    # Julias find their shipped precompile caches instead of recompiling Pkg from source.
+    env2["JULIA_DEPOT_PATH"] = mktempdir(; cleanup = true) * (Sys.iswindows() ? ";" : ":")
     julia_binary = Base.julia_cmd().exec[1]
     hsg_directory = joinpath("ext", "HistoricalStdlibGenerator")
     hsg_generate_file = joinpath(hsg_directory, "generate_historical_stdlibs.jl")
     color = something(Base.have_color, false) ? "yes" : "no"
 
     cmd_1 = `$(julia_binary) --project=$(hsg_directory) --color=$(color) -e 'import Pkg; Pkg.instantiate()'`
-    cmd_2 = `$(julia_binary) --project=$(hsg_directory) --color=$(color) --threads $(min(Sys.CPU_THREADS, 8)) $(hsg_generate_file)`
+    cmd_2 = `$(julia_binary) --project=$(hsg_directory) --color=$(color) $(hsg_generate_file)`
 
     run(setenv(cmd_1, env2))
     run(setenv(cmd_2, env2))

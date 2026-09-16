@@ -162,6 +162,7 @@ button, input, select { font: inherit; color: inherit; }
 .sw { display: inline-block; width: 26px; height: 12px; border-radius: 3px; }
 .sw-ramp { background: linear-gradient(90deg, var(--r0), var(--r9)); }
 .sw-unversioned { background: var(--unversioned); }
+.sw-upgradable { background: repeating-linear-gradient(45deg, var(--r4) 0 3px, var(--surface) 3px 4.5px); }
 .sw-unreg { width: 26px; height: 0; border-radius: 0; border-bottom: 2px dotted var(--muted); }
 .sw-selected { background: var(--accent-wash-strong); border: 1px solid var(--accent); box-sizing: border-box; }
 
@@ -212,6 +213,8 @@ svg text { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
 .run.r0 { fill: var(--r0); } .run.r1 { fill: var(--r1); } .run.r2 { fill: var(--r2); } .run.r3 { fill: var(--r3); }
 .run.r4 { fill: var(--r4); } .run.r5 { fill: var(--r5); } .run.r6 { fill: var(--r6); } .run.r7 { fill: var(--r7); }
 .run.r8 { fill: var(--r8); } .run.r9 { fill: var(--r9); }
+.run-hatch { pointer-events: none; rx: 4; ry: 4; }
+.hatch-line { stroke: var(--surface); stroke-width: 1.6; opacity: 0.7; }
 .run-label { pointer-events: none; font-variant-numeric: tabular-nums; }
 .run-label.light-ink { fill: var(--ramp-ink-light); }
 .run-label.dark-ink { fill: var(--ramp-ink-dark); }
@@ -261,6 +264,7 @@ svg text { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
 .hist { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; font-size: 13.5px; align-items: baseline; }
 .hist .hv { font-variant-numeric: tabular-nums; font-weight: 600; }
 .hist .hr { color: var(--ink-2); }
+.hist .hv .hu { margin-left: 8px; font-size: 11px; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.04em; }
 .hist .hv .swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
 .meta-line { color: var(--ink-2); font-size: 13.5px; margin: 4px 0 0; }
 .meta-line code { background: var(--surface-2); padding: 1px 5px; border-radius: 4px; }
@@ -279,6 +283,7 @@ svg text { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
 .table-view td.changed { color: var(--accent); font-weight: 600; }
 .table-view td.absent { color: var(--grid); }
 .table-view td.unversioned { color: var(--muted); }
+.table-view td.upgradable { text-decoration: underline dotted; text-underline-offset: 3px; }
 
 .foot {
   max-width: 1440px; margin: 0 auto; padding: 0 16px 40px; color: var(--muted); font-size: 12.5px;
