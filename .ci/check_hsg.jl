@@ -41,7 +41,7 @@ function run_hsg()
     color = something(Base.have_color, false) ? "yes" : "no"
 
     cmd_1 = `$(julia_binary) --project=$(hsg_directory) --color=$(color) -e 'import Pkg; Pkg.instantiate()'`
-    cmd_2 = `$(julia_binary) --project=$(hsg_directory) --color=$(color) --threads $(min(Sys.CPU_THREADS, 8)) $(hsg_generate_file)`
+    cmd_2 = `$(julia_binary) --project=$(hsg_directory) --color=$(color) $(hsg_generate_file)`
 
     run(setenv(cmd_1, env2))
     run(setenv(cmd_2, env2))

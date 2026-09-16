@@ -12,7 +12,7 @@ end
 
 # Download versions.json, start iterating over Julia versions
 versions_json_url = "https://julialang-s3.julialang.org/bin/versions.json"
-num_concurrent_downloads = 8
+num_concurrent_downloads = 16
 
 @info("Downloading versions.json...")
 json_buff = IOBuffer()
@@ -179,73 +179,48 @@ function get_stdlibs(scratch_dir, julia_installer_name)
     end
 end
 
-jobs = Channel()
-output = Channel()
 versions_dict = Dict()
 upgradable_dict = Dict()
 
-@sync begin
-    # Feeder task
-    Threads.@spawn begin
-        for (url, hash) in version_urls
-            put!(jobs, (url, hash))
-        end
-        close(jobs)
-    end
+# One task per release. Downloads are network-bound, so many run at once; extracting and
+# running each Julia is CPU-bound, so that stage is limited to the core count.
+download_sem = Base.Semaphore(num_concurrent_downloads)
+inspect_sem = Base.Semaphore(Sys.CPU_THREADS)
+@sync for (url, hash) in version_urls
+    @async try
+        # We might try to download two files that have the same basename
+        url_tag = bytes2hex(sha256(url))
+        fname = joinpath(scratch_dir, string(url_tag, "-", basename(url)))
+        Base.acquire(download_sem) do
+            if !isfile(fname)
+                @info("Downloading $(url)")
+                retry(Downloads.download, delays = ExponentialBackOff(n=5))(url, fname)
+            end
 
-    # Consumer tasks
-    work_tasks = Task[]
-    for _ in 1:Threads.nthreads()
-        task = Threads.@spawn begin
-            for (url, hash) in jobs
-                try
-                    # We might try to download two files that have the same basename
-                    url_tag = bytes2hex(sha256(url))
-                    fname = joinpath(scratch_dir, string(url_tag, "-", basename(url)))
-                    if !isfile(fname)
-                        @info("Downloading $(url)")
-                        retry(Downloads.download, delays = ExponentialBackOff(n=5))(url, fname)
+            if !isempty(hash)
+                calc_hash = bytes2hex(open(io -> sha256(io), fname, "r"))
+                if calc_hash != hash
+                    @error("Hash mismatch on $(fname); deleting and re-downloading")
+                    rm(fname; force=true)
+                    retry(Downloads.download, delays = ExponentialBackOff(n=5))(url, fname)
+                    calc_hash = bytes2hex(open(io -> sha256(io), fname, "r"))
+                    if calc_hash != hash
+                        error("Hash mismatch on $(fname); re-download failed!")
                     end
-
-                    if !isempty(hash)
-                        calc_hash = bytes2hex(open(io -> sha256(io), fname, "r"))
-                        if calc_hash != hash
-                            @error("Hash mismatch on $(fname); deleting and re-downloading")
-                            rm(fname; force=true)
-                            retry(Downloads.download, delays = ExponentialBackOff(n=5))(url, fname)
-                            calc_hash = bytes2hex(open(io -> sha256(io), fname, "r"))
-                            if calc_hash != hash
-                                @error("Hash mismatch on $(fname); re-download failed!")
-                                continue
-                            end
-                        end
-                    end
-
-                    version, stdlibs, upgradable = get_stdlibs(scratch_dir, basename(fname))
-                    put!(output, (version, stdlibs, upgradable))
-                catch e
-                    if isa(e, InterruptException)
-                        rethrow()
-                    end
-                    @error(e, exception=(e, catch_backtrace()))
                 end
             end
         end
-        push!(work_tasks, task)
-    end
 
-    # output-closing thread
-    Threads.@spawn begin
-        wait.(work_tasks)
-        close(output)
-    end
-
-    # Collector task
-    Threads.@spawn begin
-        for (version, stdlibs, upgradable) in output
-            versions_dict[version] = stdlibs
-            upgradable_dict[version] = upgradable
+        version, stdlibs, upgradable = Base.acquire(inspect_sem) do
+            get_stdlibs(scratch_dir, basename(fname))
         end
+        versions_dict[version] = stdlibs
+        upgradable_dict[version] = upgradable
+    catch e
+        if isa(e, InterruptException)
+            rethrow()
+        end
+        @error(e, exception=(e, catch_backtrace()))
     end
 end
 
