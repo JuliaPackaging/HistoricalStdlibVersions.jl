@@ -46,8 +46,8 @@
     let cur = null;
     s.entries.forEach((e, i) => {
       if (!e) { cur = null; return; }
-      if (cur && cur.v === e.v) { cur.end = i; return; }
-      cur = { start: i, end: i, v: e.v };
+      if (cur && cur.v === e.v && cur.u === e.u) { cur.end = i; return; }
+      cur = { start: i, end: i, v: e.v, u: !!e.u };
       runs.push(cur);
     });
     const versioned = runs.filter((r) => r.v !== null);
@@ -72,13 +72,14 @@
 
   // Per-column diff against the previous tracked release.
   const diffs = versions.map((v, i) => {
-    const d = { added: [], removed: [], bumped: [] };
+    const d = { added: [], removed: [], bumped: [], upgradable: [] };
     if (i === 0) return d;
     for (const s of stdlibs) {
       const a = s.entries[i - 1], b = s.entries[i];
       if (!a && b) d.added.push(s);
       else if (a && !b) d.removed.push(s);
       else if (a && b && a.v !== b.v) d.bumped.push({ s, from: a.v, to: b.v });
+      if (a && b && !!a.u !== !!b.u) d.upgradable.push({ s, now: !!b.u });
     }
     return d;
   });
@@ -116,7 +117,7 @@
       if (q && !s.name.toLowerCase().includes(q)) return false;
       if (state.onlyChanged && state.release !== null) {
         const d = diffs[state.release];
-        const hit = d.added.includes(s) || d.removed.includes(s) || d.bumped.some((b) => b.s === s);
+        const hit = d.added.includes(s) || d.removed.includes(s) || d.bumped.some((b) => b.s === s) || d.upgradable.some((b) => b.s === s);
         if (!hit) return false;
       }
       return true;
@@ -226,6 +227,11 @@
       selected.entries[selCol].w.forEach((n) => depSet.add(n));
     }
 
+    // Hatch overlay marks upgradable stdlibs (shipped with Julia, resolved from the registry).
+    const defs = el("defs", {}, chart);
+    const pat = el("pattern", { id: "hatch", width: 6, height: 6, patternUnits: "userSpaceOnUse", patternTransform: "rotate(45)" }, defs);
+    el("line", { x1: 0, y1: 0, x2: 0, y2: 6, class: "hatch-line" }, pat);
+
     // Background: row bands, group separators, selected column wash.
     const bg = el("g", {}, chart);
     rows.forEach((s, r) => {
@@ -268,6 +274,7 @@
         const w = (run.end - run.start + 1) * COL_W - 2;
         const cls = run.v === null ? "run unversioned" : "run r" + run.ramp;
         el("rect", { x, y: y + BAR_PAD, width: w, height: ROW_H - BAR_PAD * 2, class: cls }, fg);
+        if (run.u) el("rect", { x, y: y + BAR_PAD, width: w, height: ROW_H - BAR_PAD * 2, class: "run-hatch", fill: "url(#hatch)" }, fg);
         const label = run.v === null ? "–" : run.v;
         const fontPx = COL_W < 48 ? 10 : 11;
         if (textW(label, fontPx) + 8 <= w) {
@@ -329,6 +336,7 @@
     let html = "<b>" + esc(s.name) + "</b> in Julia " + esc(versions[col]) + "<br>";
     html += '<span class="tt-ver">' + (run.v === null ? "unversioned" : esc(run.v)) + "</span><br>";
     html += '<span class="tt-sub">' + esc(releaseRange(run.start, run.end)) + (n > 1 ? " · " + n + " tracked releases" : "") + esc(untilNext(run.end)) + "</span>";
+    if (e && e.u) html += '<div class="tt-deps">ships with Julia, upgradable from the General registry</div>';
     if (e) {
       if (e.d.length) html += '<div class="tt-deps">deps: ' + esc(e.d.join(", ")) + "</div>";
       if (e.w.length) html += '<div class="tt-deps">weakdeps: ' + esc(e.w.join(", ")) + "</div>";
@@ -399,6 +407,7 @@
         sw.style.background = run.v === null ? "var(--unversioned)" : "var(--r" + run.ramp + ")";
         hv.appendChild(sw);
         hv.append(run.v === null ? "unversioned" : run.v);
+        if (run.u) hv.appendChild(h("span", "hu", "upgradable"));
         const hr = h("div", "hr", releaseRange(run.start, run.end) + untilNext(run.end));
         hist.append(hv, hr);
       });
@@ -444,6 +453,9 @@
       section("Version bumps", d.bumped, (b) => chip(b.s, verSpan(b.from, b.to), "bumped"));
       section("Added", d.added, (s) => chip(s, h("span", "v", s.entries[i].v === null ? "" : s.entries[i].v), "added"));
       section("Removed", d.removed, (s) => chip(s, null, "removed"));
+      if (d.upgradable.length) {
+        section("Upgradability changed", d.upgradable, (b) => chip(b.s, h("span", "v", b.now ? "now upgradable from General" : "no longer upgradable"), "bumped"));
+      }
     } else {
       panel.hidden = true;
       return;
@@ -471,6 +483,7 @@
         if (!e) td = h("td", "absent", "·");
         else if (e.v === null) td = h("td", "unversioned", "–");
         else td = h("td", prev && prev.v !== e.v ? "changed" : null, e.v);
+        if (e && e.u) { td.classList.add("upgradable"); td.title = "ships with Julia, upgradable from General"; }
         r.appendChild(td);
       });
       tbody.appendChild(r);
@@ -539,7 +552,8 @@
     const libs = stdlibs.filter((s) => !s.jll);
     const current = stdlibs.filter((s) => s.entries[NCOL - 1]);
     $("kpi-stdlibs").textContent = stdlibs.length;
-    $("kpi-stdlibs-sub").textContent = current.length + " in the latest release · " + stdlibs.filter((s) => !s.registered).length + " never registered";
+    const upgradable = current.filter((s) => s.entries[NCOL - 1].u).length;
+    $("kpi-stdlibs-sub").textContent = current.length + " in the latest release" + (upgradable ? " (" + upgradable + " upgradable)" : "") + " · " + stdlibs.filter((s) => !s.registered).length + " never registered";
     $("kpi-jlls").textContent = stdlibs.length - libs.length;
     const total = stdlibs.reduce((a, s) => a + s.bumps, 0);
     const top = stdlibs.slice().sort((a, b) => b.bumps - a.bumps)[0];

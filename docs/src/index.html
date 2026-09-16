@@ -20,8 +20,9 @@
         as recorded by
         <a href="https://github.com/JuliaPackaging/HistoricalStdlibVersions.jl">HistoricalStdlibVersions.jl</a>.
         Only releases where the stdlib set changed are listed, so a column stands
-        for every release from that version up to the next column. The newest
-        column may come from a nightly build.
+        for every release from that version up to the next column. Hatched bars
+        are stdlibs that ship with Julia but can be upgraded from the General
+        registry. The newest column may come from a nightly build.
       </p>
     </div>
     <div class="masthead-actions">
@@ -78,6 +79,7 @@
     <div class="legend" aria-label="Legend">
       <span class="legend-item"><i class="sw sw-ramp"></i>Colour deepens with each version bump of that stdlib</span>
       <span class="legend-item"><i class="sw sw-unversioned"></i>No version in Project.toml (tracks Julia)</span>
+      <span class="legend-item"><i class="sw sw-upgradable"></i>Ships with Julia but upgradable from General</span>
       <span class="legend-item"><i class="sw sw-unreg"></i>Never registered (dotted name)</span>
       <span class="legend-item"><i class="sw sw-selected"></i>Selected release</span>
     </div>
