@@ -527,7 +527,8 @@
   // Laid out once over the union of every release's edges, so a stdlib keeps its place
   // while the slider moves and only appears, disappears, or gains and loses edges.
   const graphSvg = $("graph");
-  const RANK_GAP = 64, NODE_H = 22, LINE_GAP = 8, XGAP = 10, GPAD = 16;
+  // The gap between ranks flexes between these bounds so the graph fits the viewport height.
+  const RANK_GAP_MIN = 22, RANK_GAP_MAX = 64, NODE_H = 20, LINE_GAP = 5, XGAP = 8, GPAD = 12;
   let graph = null;
 
   function buildGraphLayout() {
@@ -538,7 +539,7 @@
       for (const d of e.w) if (!edgeKeys.has(d + "|" + s.name)) edgeKeys.set(d + "|" + s.name, { from: d, to: s.name, weak: true });
     }
     const edges = [...edgeKeys.values()];
-    // Rank is the longest chain of dependencies below a node, so leaves sit in rank 0 on the left.
+    // Rank is the longest chain of dependencies below a node; leaves are rank 0, drawn at the bottom.
     const depsOf = new Map(stdlibs.map((s) => [s.name, []]));
     edges.forEach((e) => depsOf.get(e.to).push(e.from));
     const rank = new Map(), visiting = new Set();
@@ -558,7 +559,7 @@
     // leaves at the bottom. Ranks are ordered by their neighbours' horizontal positions over a
     // few sweeps to reduce crossings.
     const width = Math.max(600, graphSvg.parentElement.clientWidth) - GPAD * 2;
-    const pillW = (n) => Math.ceil(textW(n, 12)) + 18;
+    const pillW = (n) => Math.ceil(textW(n, 12)) + 14;
     const nbrs = new Map(stdlibs.map((s) => [s.name, []]));
     edges.forEach((e) => { nbrs.get(e.from).push(e.to); nbrs.get(e.to).push(e.from); });
     const cx = new Map();
@@ -589,6 +590,12 @@
       }
     }
     const rowsByLayer = layers.map(pack);
+    // Spread the ranks over whatever height is left below the graph's top edge in the viewport.
+    const nRows = rowsByLayer.reduce((a, rows) => a + rows.length, 0);
+    const top = graphSvg.parentElement.getBoundingClientRect().top + window.scrollY;
+    const avail = window.innerHeight - top - 64 - GPAD * 2;
+    const rankGap = Math.max(RANK_GAP_MIN, Math.min(RANK_GAP_MAX,
+      (avail - nRows * NODE_H - (nRows - layers.length) * LINE_GAP) / Math.max(1, layers.length - 1)));
     const geom = new Map();
     let y = GPAD;
     for (let r = layers.length - 1; r >= 0; r--) {
@@ -596,9 +603,9 @@
         for (const n of row) geom.set(n, { x: GPAD + cx.get(n) - pillW(n) / 2, y, w: pillW(n) });
         y += NODE_H + LINE_GAP;
       }
-      y += RANK_GAP - LINE_GAP;
+      y += rankGap - LINE_GAP;
     }
-    return { edges, geom, W: width + GPAD * 2, H: y - RANK_GAP + LINE_GAP + GPAD };
+    return { edges, geom, W: width + GPAD * 2, H: y - rankGap + LINE_GAP + GPAD };
   }
 
   function buildGraphDom() {
@@ -621,8 +628,8 @@
     for (const s of stdlibs) {
       const p = graph.geom.get(s.name);
       const g = el("g", { class: "node", transform: "translate(" + p.x + "," + p.y + ")" }, ng);
-      el("rect", { width: p.w, height: NODE_H, rx: 11, ry: 11, class: "node-bg" + (s.registered ? "" : " unregistered") }, g);
-      el("rect", { width: p.w, height: NODE_H, rx: 11, ry: 11, class: "node-hatch", fill: "url(#ghatch)" }, g);
+      el("rect", { width: p.w, height: NODE_H, rx: 10, ry: 10, class: "node-bg" + (s.registered ? "" : " unregistered") }, g);
+      el("rect", { width: p.w, height: NODE_H, rx: 10, ry: 10, class: "node-hatch", fill: "url(#ghatch)" }, g);
       el("text", { x: p.w / 2, y: NODE_H / 2 + 4, "text-anchor": "middle", class: "node-label" }, g).textContent = s.name;
       g.addEventListener("mouseenter", (ev) => { focusGraph(s.name); showTip(ev, graphTip(s)); });
       g.addEventListener("mousemove", moveTip);
