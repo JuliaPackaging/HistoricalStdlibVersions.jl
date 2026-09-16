@@ -501,6 +501,8 @@
       updateColumnWidth();
       renderHeader();
       renderRows(rows);
+      const sc = $("matrix-scroll");
+      sc.classList.toggle("overflowing", LABEL_W + NCOL * COL_W > sc.clientWidth);
     } else {
       $("matrix-scroll").hidden = true;
       $("table-view").hidden = false;
@@ -546,19 +548,7 @@
   }
 
   // ---------- KPIs and footer ----------
-  function renderKpis() {
-    $("kpi-releases").textContent = NCOL;
-    $("kpi-range").textContent = "Julia " + versions[0] + " → " + versions[NCOL - 1];
-    const libs = stdlibs.filter((s) => !s.jll);
-    const current = stdlibs.filter((s) => s.entries[NCOL - 1]);
-    $("kpi-stdlibs").textContent = stdlibs.length;
-    const upgradable = current.filter((s) => s.entries[NCOL - 1].u).length;
-    $("kpi-stdlibs-sub").textContent = current.length + " in the latest release" + (upgradable ? " (" + upgradable + " upgradable)" : "") + " · " + stdlibs.filter((s) => !s.registered).length + " never registered";
-    $("kpi-jlls").textContent = stdlibs.length - libs.length;
-    const total = stdlibs.reduce((a, s) => a + s.bumps, 0);
-    const top = stdlibs.slice().sort((a, b) => b.bumps - a.bumps)[0];
-    $("kpi-bumps").textContent = total;
-    $("kpi-bumps-sub").textContent = "most: " + top.name + " (" + top.bumps + ")";
+  function renderMeta() {
     const meta = [];
     if (DATA.package_version) meta.push("HistoricalStdlibVersions v" + DATA.package_version);
     if (DATA.data_updated) meta.push("data updated " + DATA.data_updated);
@@ -628,7 +618,7 @@
   });
 
   readHash();
-  renderKpis();
+  renderMeta();
   render();
   if (state.release !== null) requestAnimationFrame(() => scrollColumnIntoView(state.release));
 })();

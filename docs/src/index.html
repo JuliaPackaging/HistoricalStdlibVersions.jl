@@ -16,13 +16,8 @@
     <div class="title-block">
       <h1>Julia stdlib versions</h1>
       <p class="lede">
-        Which version of each standard library shipped with each Julia release,
-        as recorded by
+        Which version of each standard library shipped with each Julia release, as recorded by
         <a href="https://github.com/JuliaPackaging/HistoricalStdlibVersions.jl">HistoricalStdlibVersions.jl</a>.
-        Only releases where the stdlib set changed are listed, so a column stands
-        for every release from that version up to the next column. Hatched bars
-        are stdlibs that ship with Julia but can be upgraded from the General
-        registry. The newest column may come from a nightly build.
       </p>
     </div>
     <div class="masthead-actions">
@@ -37,13 +32,6 @@
 </header>
 
 <main class="page">
-  <section class="kpis" aria-label="Summary">
-    <div class="tile"><div class="tile-value" id="kpi-releases">–</div><div class="tile-label">Julia releases tracked</div><div class="tile-sub" id="kpi-range"></div></div>
-    <div class="tile"><div class="tile-value" id="kpi-stdlibs">–</div><div class="tile-label">Standard libraries</div><div class="tile-sub" id="kpi-stdlibs-sub"></div></div>
-    <div class="tile"><div class="tile-value" id="kpi-jlls">–</div><div class="tile-label">JLL binary wrappers</div><div class="tile-sub">bundled since Julia 1.6</div></div>
-    <div class="tile"><div class="tile-value" id="kpi-bumps">–</div><div class="tile-label">Version bumps recorded</div><div class="tile-sub" id="kpi-bumps-sub"></div></div>
-  </section>
-
   <section class="controls" aria-label="Filters">
     <label class="search">
       <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m13 13 4.5 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
@@ -98,7 +86,12 @@
       </div>
     </div>
     <div id="table-view" class="table-view" hidden></div>
-    <p class="hint">Hover a bar for details. Click a column to see what changed in that release, or a row name for its full history.</p>
+    <p class="hint">
+      Only releases where the stdlib set changed are listed, so a column stands for every release
+      from that version up to the next column. The newest column may come from a nightly build.
+      Hover a bar for details. Click a column to see what changed in that release, or a row name
+      for its full history.
+    </p>
   </section>
 
   <aside class="panel" id="panel" hidden aria-live="polite">
