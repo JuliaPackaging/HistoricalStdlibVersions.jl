@@ -209,9 +209,38 @@
     });
   }
 
+  // Colours resolved from the active theme, read once per render.
+  function readTheme() {
+    const cs = getComputedStyle(document.documentElement);
+    const get = (n) => cs.getPropertyValue(n).trim();
+    return {
+      ramp: Array.from({ length: RAMP_STEPS }, (_, k) => get("--r" + k)),
+      unversioned: get("--unversioned"),
+      unversionedInk: get("--unversioned-ink"),
+      inkDark: get("--ramp-ink-light"),
+      inkLight: get("--ramp-ink-dark"),
+    };
+  }
+  let theme = null;
+  const luminance = (hex) => {
+    const c = hex.replace("#", "");
+    const [r, g, b] = [0, 2, 4].map((i) => {
+      const v = parseInt(c.slice(i, i + 2), 16) / 255;
+      return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+    });
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  };
+  const contrast = (a, b) => (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+  // Whichever of the two inks reads better on this background.
+  function inkFor(bg) {
+    const l = luminance(bg);
+    return contrast(l, luminance(theme.inkLight)) >= contrast(l, luminance(theme.inkDark)) ? theme.inkLight : theme.inkDark;
+  }
+
   function renderRows(rows) {
     labels.innerHTML = "";
     chart.innerHTML = "";
+    theme = readTheme();
     const H = Math.max(rows.length * ROW_H, ROW_H);
     const W = NCOL * COL_W;
     labels.setAttribute("width", LABEL_W);
@@ -276,11 +305,13 @@
         el("rect", { x, y: y + BAR_PAD, width: w, height: ROW_H - BAR_PAD * 2, class: cls }, fg);
         if (run.u) el("rect", { x, y: y + BAR_PAD, width: w, height: ROW_H - BAR_PAD * 2, class: "run-hatch", fill: "url(#hatch)" }, fg);
         const label = run.v === null ? "–" : run.v;
-        const fontPx = COL_W < 48 ? 10 : 11;
+        const fontPx = COL_W < 48 ? 10.5 : 11.5;
         if (textW(label, fontPx) + 8 <= w) {
-          const flip = parseInt(getComputedStyle(document.documentElement).getPropertyValue("--ramp-flip"), 10) || 4;
-          const ink = run.v === null ? "unversioned" : (run.ramp >= flip ? "dark-ink" : "light-ink");
-          const tl = el("text", { x: x + w / 2, y: y + ROW_H / 2 + 4, "text-anchor": "middle", class: "run-label " + ink, "font-size": fontPx }, fg);
+          // Ink is chosen per bar from the bar colour's contrast, and the label wears a halo
+          // in that colour so the hatch on upgradable bars does not cut through the digits.
+          const bg = run.v === null ? theme.unversioned : theme.ramp[run.ramp];
+          const ink = run.v === null ? theme.unversionedInk : inkFor(bg);
+          const tl = el("text", { x: x + w / 2, y: y + ROW_H / 2 + 4, "text-anchor": "middle", class: "run-label", "font-size": fontPx, fill: ink, stroke: bg }, fg);
           tl.textContent = label;
         }
         const outline = el("rect", { x: x + 0.5, y: y + BAR_PAD + 0.5, width: w - 1, height: ROW_H - BAR_PAD * 2 - 1, class: "run-outline" }, fg);

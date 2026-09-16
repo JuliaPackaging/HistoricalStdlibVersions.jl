@@ -22,7 +22,6 @@
   --r5: #256abf; --r6: #1c5cab; --r7: #184f95; --r8: #104281; --r9: #0d366b;
   --ramp-ink-dark: #ffffff;
   --ramp-ink-light: #0b0b0b;
-  --ramp-flip: 4; /* first ramp index whose bar text is white */
 }
 
 @media (prefers-color-scheme: dark) {
@@ -48,7 +47,6 @@
     /* Same ramp, dimmest step nearest the dark surface, brightening with each bump. */
     --r0: #184f95; --r1: #1c5cab; --r2: #256abf; --r3: #2a78d6; --r4: #3987e5;
     --r5: #5598e7; --r6: #6da7ec; --r7: #86b6ef; --r8: #9ec5f4; --r9: #b7d3f6;
-    --ramp-flip: 6;
   }
 }
 :root[data-theme="dark"] {
@@ -72,7 +70,6 @@
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.35);
   --r0: #184f95; --r1: #1c5cab; --r2: #256abf; --r3: #2a78d6; --r4: #3987e5;
   --r5: #5598e7; --r6: #6da7ec; --r7: #86b6ef; --r8: #9ec5f4; --r9: #b7d3f6;
-  --ramp-flip: 6;
 }
 
 * { box-sizing: border-box; }
@@ -208,9 +205,10 @@ svg text { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
 .run.r8 { fill: var(--r8); } .run.r9 { fill: var(--r9); }
 .run-hatch { pointer-events: none; rx: 4; ry: 4; }
 .hatch-line { stroke: var(--surface); stroke-width: 1.6; opacity: 0.7; }
-.run-label { pointer-events: none; font-variant-numeric: tabular-nums; }
-.run-label.light-ink { fill: var(--ramp-ink-light); }
-.run-label.dark-ink { fill: var(--ramp-ink-dark); }
+.run-label {
+  pointer-events: none; font-variant-numeric: tabular-nums; font-weight: 600;
+  paint-order: stroke; stroke-width: 3px; stroke-linejoin: round;
+}
 .run-label.unversioned { fill: var(--unversioned-ink); }
 .run-hit { fill: transparent; cursor: default; }
 .run-hit:hover + .run-outline, .run-outline.hover { stroke: var(--ink); }
