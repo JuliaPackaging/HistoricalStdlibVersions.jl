@@ -117,15 +117,6 @@ function get_stdlibs(scratch_dir, julia_installer_name)
             else
                 stdlibs_str = readchomp(`$(jlexe) $(jlflags) -e 'import Pkg; print(repr(Pkg.Types.load_stdlib()))'`)
             end
-            # Since Julia 1.9, some stdlibs ship with Julia but are resolved from the registry like
-            # normal packages ("upgradable" stdlibs). `load_stdlib()` leaves them out, so ask for
-            # their names separately; they are recorded apart from the regular stdlibs. Pkg called
-            # the list `FORMER_STDLIBS` before Julia 1.12.
-            upgradable_names = String[]
-            if jlvers >= v"1.9"
-                upgradable_str = readchomp(`$(jlexe) $(jlflags) -e 'import Pkg; print(repr(isdefined(Pkg.Types, :UPGRADABLE_STDLIBS) ? Pkg.Types.UPGRADABLE_STDLIBS : isdefined(Pkg.Types, :FORMER_STDLIBS) ? Pkg.Types.FORMER_STDLIBS : String[]))'`)
-                upgradable_names = eval(Meta.parse(upgradable_str))
-            end
 
             # This will give us a dictionary of UUID => (name, version, deps, weakdeps) mappings for all standard libraries
             stdlibs = Dict{Base.UUID, Tuple}()
@@ -136,6 +127,15 @@ function get_stdlibs(scratch_dir, julia_installer_name)
             get_name(s::AbstractString) = s
             get_name(stdlib::StdlibInfo) = stdlib.name
             stdlib_names = [get_name(name) for (_, name) in eval(Meta.parse(stdlibs_str))]
+            # Since Julia 1.9, some stdlibs ship with Julia but are resolved from the registry like
+            # normal packages ("upgradable" stdlibs). Pkg's `load_stdlib()` skips them, so they are
+            # the stdlib directories it did not report. They are recorded apart from the regular stdlibs.
+            upgradable_names = String[]
+            if jlvers >= v"1.9"
+                upgradable_names = filter(readdir(stdlib_path)) do name
+                    name ∉ stdlib_names && isfile(joinpath(stdlib_path, name, "Project.toml"))
+                end
+            end
             for name in vcat(stdlib_names, upgradable_names)
                 project_path = joinpath(stdlib_path, name, "Project.toml")
                 version = nothing
