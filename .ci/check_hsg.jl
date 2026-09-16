@@ -34,7 +34,7 @@ function run_hsg()
     delete!(env2, "JULIA_PROJECT")
     # The trailing separator keeps Julia's bundled depots on the path, so the downloaded
     # Julias find their shipped precompile caches instead of recompiling Pkg from source.
-    env2["JULIA_DEPOT_PATH"] = mktempdir(; cleanup = true) * Base.Filesystem.pathsep()
+    env2["JULIA_DEPOT_PATH"] = mktempdir(; cleanup = true) * (Sys.iswindows() ? ";" : ":")
     julia_binary = Base.julia_cmd().exec[1]
     hsg_directory = joinpath("ext", "HistoricalStdlibGenerator")
     hsg_generate_file = joinpath(hsg_directory, "generate_historical_stdlibs.jl")
