@@ -119,10 +119,11 @@ function get_stdlibs(scratch_dir, julia_installer_name)
             end
             # Since Julia 1.9, some stdlibs ship with Julia but are resolved from the registry like
             # normal packages ("upgradable" stdlibs). `load_stdlib()` leaves them out, so ask for
-            # their names separately; they are recorded apart from the regular stdlibs.
+            # their names separately; they are recorded apart from the regular stdlibs. Pkg called
+            # the list `FORMER_STDLIBS` before Julia 1.12.
             upgradable_names = String[]
             if jlvers >= v"1.9"
-                upgradable_str = readchomp(`$(jlexe) $(jlflags) -e 'import Pkg; print(repr(isdefined(Pkg.Types, :UPGRADABLE_STDLIBS) ? Pkg.Types.UPGRADABLE_STDLIBS : String[]))'`)
+                upgradable_str = readchomp(`$(jlexe) $(jlflags) -e 'import Pkg; print(repr(isdefined(Pkg.Types, :UPGRADABLE_STDLIBS) ? Pkg.Types.UPGRADABLE_STDLIBS : isdefined(Pkg.Types, :FORMER_STDLIBS) ? Pkg.Types.FORMER_STDLIBS : String[]))'`)
                 upgradable_names = eval(Meta.parse(upgradable_str))
             end
 
