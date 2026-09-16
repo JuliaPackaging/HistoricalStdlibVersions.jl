@@ -320,3 +320,7 @@ body.view-graph .legend-item.graph-only { display: inline-flex; }
 body.view-graph .chart-only { display: none; }
 .sw-weak { width: 26px; height: 0; border-radius: 0; border-bottom: 2px dashed var(--axis); }
 @media (prefers-reduced-motion: reduce) { .edge, .node, .node-bg { transition: none; } }
+
+/* Controls that have no effect on the current view are hidden rather than left dead. */
+body[data-view="table"] .density-seg, body[data-view="graph"] .density-seg { display: none; }
+body[data-view="graph"] .select-wrap { display: none; }

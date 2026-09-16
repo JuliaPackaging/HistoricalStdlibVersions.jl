@@ -742,6 +742,7 @@
     $("table-view").hidden = state.view !== "table";
     $("graph-view").hidden = state.view !== "graph";
     document.body.classList.toggle("view-graph", state.view === "graph");
+    document.body.dataset.view = state.view;
     if (state.view === "chart") {
       updateColumnWidth();
       renderHeader();
