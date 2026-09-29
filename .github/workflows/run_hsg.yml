@@ -1,6 +1,15 @@
 name: Update Historical Stdlibs
 
 on:
+  # Julia releases a patch, its bundled stdlib versions move, and nothing here
+  # notices: this workflow only ever ran when somebody remembered to dispatch
+  # it. Julia 1.13.1 was released on 2026-09-26 and the map had last been
+  # regenerated on 2026-09-08, so the data was wrong about it immediately and
+  # would have stayed wrong indefinitely -- it was fixed two days later only
+  # because a downstream consumer hit the gap and dispatched this by hand.
+  # A weekly run turns "until somebody notices" into "by next Monday".
+  schedule:
+    - cron: '0 6 * * 1'
   workflow_dispatch:
 
 permissions: # Permissions for the `GITHUB_TOKEN` token
