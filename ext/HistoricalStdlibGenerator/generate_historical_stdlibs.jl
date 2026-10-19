@@ -224,13 +224,20 @@ inspect_sem = Base.Semaphore(Sys.CPU_THREADS)
     end
 end
 
-# Next, drop versions that are the same as the one "before" them:
-function drop_unchanged!(d::Dict)
+# Next, drop versions that are the same as the one "before" them.
+# Pkg refuses to resolve for a major.minor without an entry, so with `keep_minor_starts`
+# the first release of each minor stays even if unchanged, e.g. a nightly right after
+# the previous release branch was cut.
+function drop_unchanged!(d::Dict; keep_minor_starts::Bool=false)
     sorted_versions = sort(collect(keys(d)))
     versions_to_drop = VersionNumber[]
     for idx in 2:length(sorted_versions)
-        if d[sorted_versions[idx-1]] == d[sorted_versions[idx]]
-            push!(versions_to_drop, sorted_versions[idx])
+        prev, curr = sorted_versions[idx-1], sorted_versions[idx]
+        if keep_minor_starts && (prev.major, prev.minor) != (curr.major, curr.minor)
+            continue
+        end
+        if d[prev] == d[curr]
+            push!(versions_to_drop, curr)
         end
     end
     for v in versions_to_drop
@@ -238,7 +245,7 @@ function drop_unchanged!(d::Dict)
     end
     return d
 end
-drop_unchanged!(versions_dict)
+drop_unchanged!(versions_dict; keep_minor_starts=true)
 drop_unchanged!(upgradable_dict)
 
 # Next, figure out which stdlibs are actually unresolvable, because they've never been registered
