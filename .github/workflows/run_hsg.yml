@@ -25,7 +25,9 @@ concurrency:
 jobs:
   run_hsg:
     name: Update Historical Stdlibs
-    runs-on: ubuntu-latest
+    # Ubuntu 26.04's glibc will not load the executable-stack libopenlibm of Julia
+    # 1.9.0-1.10.8 and 1.11.0-1.11.3, so those releases cannot run there.
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7

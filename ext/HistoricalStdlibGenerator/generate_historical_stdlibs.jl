@@ -181,6 +181,7 @@ end
 
 versions_dict = Dict()
 upgradable_dict = Dict()
+failed = String[]
 
 # One task per release. Downloads are network-bound, so many run at once; extracting and
 # running each Julia is CPU-bound, so that stage is limited to the core count.
@@ -221,8 +222,11 @@ inspect_sem = Base.Semaphore(Sys.CPU_THREADS)
             rethrow()
         end
         @error(e, exception=(e, catch_backtrace()))
+        push!(failed, url)
     end
 end
+# A missing release would drop its entry from the map, so write nothing.
+isempty(failed) || error("Could not inspect $(length(failed)) releases:\n", join(failed, "\n"))
 
 # Next, drop versions that are the same as the one "before" them.
 # Pkg refuses to resolve for a major.minor without an entry, so with `keep_minor_starts`
