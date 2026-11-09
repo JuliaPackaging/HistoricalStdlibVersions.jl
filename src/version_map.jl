@@ -19332,7 +19332,7 @@ const STDLIBS_BY_VERSION = [
         UUID("8ba89e20-285c-5b6f-9357-94700520ee1b") => StdlibInfo(
             "Distributed",
             UUID("8ba89e20-285c-5b6f-9357-94700520ee1b"),
-            v"1.12.0",
+            v"1.11.0",
             UUID[UUID("6462fe0b-24de-5631-8697-dd941f90decc"), UUID("9a3f8284-a2c9-5f02-9a11-845980a1fd5c"), UUID("9e88b42a-f829-5b0c-bbe9-9e923198166b")],
             UUID[],
         ),
@@ -19437,7 +19437,7 @@ const STDLIBS_BY_VERSION = [
         UUID("183b4373-6708-53ba-ad28-60e28bb38547") => StdlibInfo(
             "LibUV_jll",
             UUID("183b4373-6708-53ba-ad28-60e28bb38547"),
-            v"2.0.1+23",
+            v"2.0.1+24",
             UUID[UUID("56f22d72-fd6d-98f1-02f0-08ddc0907c33"), UUID("8f399da3-3557-5675-b5ff-fb832c97cbdb")],
             UUID[],
         ),
@@ -19472,7 +19472,7 @@ const STDLIBS_BY_VERSION = [
         UUID("3a97d323-0669-5f0c-9066-3539efd106a3") => StdlibInfo(
             "MPFR_jll",
             UUID("3a97d323-0669-5f0c-9066-3539efd106a3"),
-            v"4.2.2+1",
+            v"4.2.2+2",
             UUID[UUID("56f22d72-fd6d-98f1-02f0-08ddc0907c33"), UUID("781609d7-10c4-51f6-84f2-b8444358ff6d"), UUID("8f399da3-3557-5675-b5ff-fb832c97cbdb"), UUID("e66e0078-7015-5450-92f7-15fbd957f2ae")],
             UUID[],
         ),
@@ -19493,7 +19493,7 @@ const STDLIBS_BY_VERSION = [
         UUID("14a3606d-f60d-562e-9121-12d972cd8159") => StdlibInfo(
             "MozillaCACerts_jll",
             UUID("14a3606d-f60d-562e-9121-12d972cd8159"),
-            v"2026.10.20",
+            v"2026.11.5",
             UUID[],
             UUID[],
         ),
@@ -19818,7 +19818,7 @@ const STDLIBS_BY_VERSION = [
         UUID("47c5dbc3-30ba-59ef-96a6-123e260183d9") => StdlibInfo(
             "LLVMLibUnwind_jll",
             UUID("47c5dbc3-30ba-59ef-96a6-123e260183d9"),
-            v"19.1.4+0",
+            v"19.1.4+1",
             UUID[UUID("56f22d72-fd6d-98f1-02f0-08ddc0907c33"), UUID("8f399da3-3557-5675-b5ff-fb832c97cbdb")],
             UUID[],
         ),
@@ -19867,7 +19867,7 @@ const STDLIBS_BY_VERSION = [
         UUID("183b4373-6708-53ba-ad28-60e28bb38547") => StdlibInfo(
             "LibUV_jll",
             UUID("183b4373-6708-53ba-ad28-60e28bb38547"),
-            v"2.0.1+23",
+            v"2.0.1+24",
             UUID[UUID("56f22d72-fd6d-98f1-02f0-08ddc0907c33"), UUID("8f399da3-3557-5675-b5ff-fb832c97cbdb")],
             UUID[],
         ),
@@ -19902,7 +19902,7 @@ const STDLIBS_BY_VERSION = [
         UUID("3a97d323-0669-5f0c-9066-3539efd106a3") => StdlibInfo(
             "MPFR_jll",
             UUID("3a97d323-0669-5f0c-9066-3539efd106a3"),
-            v"4.2.2+1",
+            v"4.2.2+2",
             UUID[UUID("56f22d72-fd6d-98f1-02f0-08ddc0907c33"), UUID("781609d7-10c4-51f6-84f2-b8444358ff6d"), UUID("8f399da3-3557-5675-b5ff-fb832c97cbdb"), UUID("e66e0078-7015-5450-92f7-15fbd957f2ae")],
             UUID[],
         ),
@@ -19923,7 +19923,7 @@ const STDLIBS_BY_VERSION = [
         UUID("14a3606d-f60d-562e-9121-12d972cd8159") => StdlibInfo(
             "MozillaCACerts_jll",
             UUID("14a3606d-f60d-562e-9121-12d972cd8159"),
-            v"2026.10.20",
+            v"2026.11.5",
             UUID[],
             UUID[],
         ),
@@ -20091,7 +20091,7 @@ const STDLIBS_BY_VERSION = [
         UUID("83775a58-1f1d-513f-b197-d71354ab007a") => StdlibInfo(
             "Zlib_jll",
             UUID("83775a58-1f1d-513f-b197-d71354ab007a"),
-            v"1.3.2+0",
+            v"1.4.0+0",
             UUID[UUID("8f399da3-3557-5675-b5ff-fb832c97cbdb")],
             UUID[],
         ),
@@ -20133,14 +20133,14 @@ const STDLIBS_BY_VERSION = [
         UUID("8e850ede-7688-5339-a07c-302acd2aaf8d") => StdlibInfo(
             "nghttp2_jll",
             UUID("8e850ede-7688-5339-a07c-302acd2aaf8d"),
-            v"1.70.0+0",
+            v"1.71.0+0",
             UUID[UUID("56f22d72-fd6d-98f1-02f0-08ddc0907c33"), UUID("8f399da3-3557-5675-b5ff-fb832c97cbdb"), UUID("e66e0078-7015-5450-92f7-15fbd957f2ae")],
             UUID[],
         ),
         UUID("3f19e933-33d8-53b3-aaab-bd5110c3b7a0") => StdlibInfo(
             "p7zip_jll",
             UUID("3f19e933-33d8-53b3-aaab-bd5110c3b7a0"),
-            v"17.8.5+0",
+            v"17.8.6+0",
             UUID[UUID("56f22d72-fd6d-98f1-02f0-08ddc0907c33"), UUID("8f399da3-3557-5675-b5ff-fb832c97cbdb"), UUID("e66e0078-7015-5450-92f7-15fbd957f2ae")],
             UUID[],
         ),
