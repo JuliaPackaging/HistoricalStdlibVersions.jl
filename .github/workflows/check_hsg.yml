@@ -17,7 +17,8 @@ concurrency:
 
 jobs:
   check_hsg:
-    runs-on: ubuntu-latest
+    # Same as `run_hsg.yml`: Ubuntu 26.04 cannot run Julia 1.9.0-1.10.8 and 1.11.0-1.11.3.
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
